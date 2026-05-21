@@ -7,6 +7,7 @@ export default function TopBar({
   onToggleRedaction,
   onToggleAI,
   onToggleTemplates,
+  onPrint,
 }) {
   const [apiKey, setApiKey] = useState(() => lsGet('apiKey', ''));
 
@@ -44,7 +45,7 @@ export default function TopBar({
         >
           {showRedacted ? '🔓 Showing All' : '🔒 Show Redacted'}
         </button>
-        <button onClick={() => window.print()}>📄 Print PDF</button>
+        <button onClick={onPrint}>📄 Print PDF</button>
         <button
           onClick={() =>
             alert('PPTX export requires pptxgenjs integration. Save your work and use the export API.')

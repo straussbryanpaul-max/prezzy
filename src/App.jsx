@@ -4,6 +4,7 @@ import Sidebar from './components/Sidebar.jsx';
 import StatusBar from './components/StatusBar.jsx';
 import AIPanel from './components/AIPanel.jsx';
 import TemplateManager from './components/TemplateManager.jsx';
+import PrintView from './components/PrintView.jsx';
 import BlockToolbar from './components/blocks/BlockToolbar.jsx';
 import BlockContainer from './components/blocks/BlockContainer.jsx';
 import ShapePicker from './components/blocks/ShapePicker.jsx';
@@ -26,6 +27,7 @@ export default function App() {
   const [toolbarOpen, setToolbarOpen] = useState(true);
   const [sidebarOpen, setSidebarOpen] = useLocalStorageBool('sidebarOpen', true);
   const [templatesOpen, setTemplatesOpen] = useState(false);
+  const [printMode, setPrintMode] = useState(false);
 
   const { blocks, add, update, remove, resize, reorder } = useBlocks(activeSlideId);
 
@@ -119,7 +121,11 @@ export default function App() {
         onToggleRedaction={toggleRedaction}
         onToggleAI={() => setAIOpen(o => !o)}
         onToggleTemplates={() => setTemplatesOpen(o => !o)}
+        onPrint={() => setPrintMode(true)}
       />
+      {printMode && (
+        <PrintView showRedacted={showRedacted} onAfterPrint={() => setPrintMode(false)} />
+      )}
       <Sidebar
         activeSlideId={activeSlideId}
         showRedacted={showRedacted}

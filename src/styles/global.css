@@ -1198,11 +1198,243 @@ body {
 .section-divider h1 { color: var(--white); font-size: 24px; font-weight: 800; }
 .section-divider .sub { color: var(--teal); font-size: 14px; margin-top: 4px; }
 
+/* ============ PRINT VIEW (off-screen multi-slide stack) ============ */
+/* On-screen the print-root is hidden; print stylesheet shows it and hides the live UI. */
+.print-root { display: none; }
+
 @media print {
-  .sidebar, .topbar, .ai-panel, .guidance, .brain-dump, .block-toolbar,
-  .notes-drawer, .modal-bg, .ai-btn { display: none !important; }
-  .main { margin: 0; padding: 16px; }
-  .slide-card { break-inside: avoid; box-shadow: none; border: 1px solid #ddd; }
+  /* Standard letter, comfortable margins; iframes/PowerBI print as snapshots */
+  @page {
+    size: Letter portrait;
+    margin: 0.5in 0.5in 0.7in;
+  }
+
+  /* Hide ALL live UI chrome */
+  .topbar,
+  .sidebar,
+  .sidebar-reopen,
+  .ai-panel,
+  .notes-drawer,
+  .modal-bg,
+  .block-toolbar,
+  .block-toolbar-reopen,
+  .statusbar,
+  .main,
+  .sec-ctl-bar,
+  .chunk-ctl-bar,
+  .block-controls,
+  .resize-handle,
+  .guidance,
+  .brain-dump,
+  .img-toolbar,
+  .img-upload-clear,
+  .img-upload-replace,
+  .pbi-resize-handle,
+  .pbi-cog,
+  .pbi-input-row,
+  .pbi-settings,
+  .pbi-header { display: none !important; }
+
+  /* Show & flow the print stack */
+  body { background: #fff !important; }
+  .print-root {
+    display: block !important;
+    background: #fff !important;
+    color: #000 !important;
+  }
+
+  /* One slide per page (subsequent slides only) */
+  .print-slide {
+    break-before: page;
+    page-break-before: always;
+    padding: 0;
+    margin: 0;
+  }
+  .print-slide-first {
+    break-before: auto;
+    page-break-before: auto;
+  }
+
+  /* Page-level title bar at the top of each slide */
+  .print-slide-header {
+    border-bottom: 2px solid #1E2D38;
+    padding: 0 0 8px;
+    margin: 0 0 14px;
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+  }
+  .print-slide-num {
+    font-size: 10pt;
+    font-weight: 700;
+    color: #00A3A1;
+    letter-spacing: 0.5px;
+  }
+  .print-slide-title {
+    font-size: 14pt;
+    font-weight: 800;
+    color: #1E2D38;
+  }
+  .print-slide-body { position: relative; }
+
+  /* Don't split sections, cards, tables, images, blocks across pages */
+  .editable-section,
+  .editable-chunk,
+  .slide-card,
+  .mod-block,
+  .data-table,
+  .img-upload,
+  .mod-img-wrap,
+  .mod-pbi-wrap,
+  .mod-table-wrap,
+  .mod-text-wrap,
+  .mod-file-wrap,
+  .mod-shape-wrap {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+  tr, thead, tbody, tfoot {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  /* Strip the live-app outlines/shadows */
+  .editable-section { border-color: transparent !important; box-shadow: none !important; padding: 0 !important; margin: 0 0 14px !important; width: 100% !important; display: block !important; }
+  .editable-section.is-preread { border-color: transparent !important; box-shadow: none !important; }
+  .editable-chunk { border-color: transparent !important; padding: 0 !important; margin: 0 0 10px !important; width: 100% !important; display: block !important; }
+  .slide-card { border: 1px solid #ddd !important; box-shadow: none !important; border-radius: 6px; overflow: visible; }
+  .slide-card .card-header { background: #1E2D38 !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+  .slide-card .card-header h2 { color: #fff !important; }
+  .slide-card .card-header .slide-num { color: #00A3A1 !important; }
+  .slide-card .card-header .redact-check,
+  .slide-card .card-header .preread-check { display: none !important; }
+  .slide-card .card-body { padding: 16px !important; }
+
+  /* Preserve the pre-read banner */
+  .preread-banner {
+    background: #FEF3C7 !important;
+    border-color: #F59E0B !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    color: #78350F !important;
+  }
+  .preread-banner-text strong { color: #78350F !important; }
+
+  /* Preserve table styling */
+  .data-table th {
+    background: #1E2D38 !important;
+    color: #fff !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Form fields print as their values, with light styling */
+  input, textarea, select {
+    border: 1px solid #ddd !important;
+    background: transparent !important;
+    color: #000 !important;
+    box-shadow: none !important;
+    -webkit-appearance: none !important;
+    appearance: none !important;
+    font-size: 10pt !important;
+  }
+  textarea {
+    resize: none !important;
+    overflow: visible !important;
+    height: auto !important;
+    min-height: 0 !important;
+  }
+  .data-table input,
+  .data-table textarea,
+  .data-table select {
+    border-color: transparent !important;
+  }
+
+  /* Hide the file input (kept as a hidden control on screen) */
+  input[type="file"] { display: none !important; }
+
+  /* Image uploads — show the image, hide the placeholder */
+  .img-upload:not(.has-image) { display: none !important; }
+  .img-upload {
+    padding: 0 !important;
+    border: none !important;
+    background: transparent !important;
+    text-align: center !important;
+  }
+  .img-upload img { max-width: 100% !important; height: auto !important; }
+  .mod-img-wrap:not(.has-image) { display: none !important; }
+
+  /* Power BI: iframes can't print live, replace with placeholder */
+  .mod-pbi-wrap .pbi-embed-frame iframe {
+    visibility: hidden;
+    height: 240px;
+  }
+  .mod-pbi-wrap::after {
+    content: "📊 Power BI live embed — open in browser for interactive view";
+    display: block;
+    padding: 24px;
+    background: #F4F6F9;
+    color: #64748B;
+    text-align: center;
+    border-radius: 6px;
+    font-size: 11pt;
+    margin-top: 8px;
+  }
+  .pbi-embed-frame { display: none !important; }
+
+  /* Redacted shroud reprints with diagonal stripes */
+  .redacted-wrap.redacted-on > *:not(.redacted-shroud) {
+    filter: blur(2px) !important;
+  }
+  .redacted-shroud {
+    background-image: repeating-linear-gradient(
+      45deg,
+      rgba(232, 41, 11, 0.18),
+      rgba(232, 41, 11, 0.18) 12px,
+      rgba(232, 41, 11, 0.04) 12px,
+      rgba(232, 41, 11, 0.04) 24px
+    ) !important;
+    border: 2px dashed rgba(232,41,11,0.5) !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+  .redacted-shroud-text {
+    color: rgba(232, 41, 11, 0.6) !important;
+    font-size: 48pt !important;
+  }
+  .redacted-shroud-sub { display: none !important; }
+
+  /* Discipline tabs only show active label */
+  .discipline-tabs { display: none !important; }
+
+  /* Modular block style normalization */
+  .mod-block {
+    border: 1px solid #ddd !important;
+    padding: 8px !important;
+    margin-bottom: 10px !important;
+    width: 100% !important;
+    display: block !important;
+  }
+
+  /* Section divider styling for print */
+  .section-divider {
+    background: #1E2D38 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+  .section-divider h1 { color: #fff !important; }
+  .section-divider .sub { color: #00A3A1 !important; }
+
+  /* TOC keeps the chip styling */
+  .chip-preread {
+    background: #DBEAFE !important;
+    color: #1E40AF !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* AI panel/result boxes stripped */
+  .ai-result-box, .deleted-section-ghost, .deleted-chunk-ghost { display: none !important; }
 }
 
 @keyframes slideIn {
