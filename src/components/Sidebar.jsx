@@ -12,7 +12,15 @@ function isSlidePreRead(sl) {
   return stored === 'true';
 }
 
-export default function Sidebar({ activeSlideId, showRedacted, onNavigate, redactVersion }) {
+export default function Sidebar({
+  activeSlideId,
+  showRedacted,
+  onNavigate,
+  redactVersion,
+  preReadVersion,
+  open = true,
+  onClose,
+}) {
   const [collapsed, setCollapsed] = useState({});
 
   function toggleSection(id) {
@@ -20,7 +28,10 @@ export default function Sidebar({ activeSlideId, showRedacted, onNavigate, redac
   }
 
   return (
-    <div className="sidebar">
+    <div className={`sidebar${open ? '' : ' hidden'}`}>
+      <button className="sidebar-close" onClick={onClose} title="Hide sidebar">
+        ◀
+      </button>
       {sections.map(sec => {
         const isCollapsed = !!collapsed[sec.id];
         return (
@@ -45,6 +56,7 @@ export default function Sidebar({ activeSlideId, showRedacted, onNavigate, redac
                       key={sl.id}
                       className={`slide-item ${cls}`}
                       data-redact-version={redactVersion}
+                      data-preread-version={preReadVersion}
                       onClick={() => onNavigate(sl.id)}
                     >
                       <span>{sl.num}</span> {sl.title}

@@ -74,8 +74,55 @@ body {
 .sidebar {
   position: fixed; top: 60px; left: 0; width: 300px; bottom: 0;
   background: var(--white); border-right: 1px solid var(--gray);
-  overflow-y: auto; z-index: 900; transition: var(--transition);
+  overflow-y: auto; z-index: 900;
+  transition: transform 0.25s cubic-bezier(.4,0,.2,1);
 }
+.sidebar.hidden { transform: translateX(-100%); }
+.sidebar-close {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: var(--light);
+  border: 1px solid var(--gray);
+  color: var(--gray3);
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 11px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: inherit;
+  z-index: 1;
+  transition: var(--transition);
+}
+.sidebar-close:hover {
+  background: var(--navy);
+  color: #fff;
+  border-color: var(--navy);
+}
+.sidebar-reopen {
+  position: fixed;
+  top: 72px;
+  left: 8px;
+  background: var(--navy);
+  color: #fff;
+  border: 1px solid rgba(255,255,255,0.15);
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 16px;
+  font-family: inherit;
+  z-index: 901;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(0,0,0,.25);
+  transition: var(--transition);
+}
+.sidebar-reopen:hover { background: var(--blue); }
 .sidebar::-webkit-scrollbar { width: 4px; }
 .sidebar::-webkit-scrollbar-thumb { background: var(--gray2); border-radius: 4px; }
 .section-group { border-bottom: 1px solid var(--gray); }
@@ -122,7 +169,9 @@ body {
 .main {
   margin-left: 300px; margin-top: 60px; padding: 32px;
   min-height: calc(100vh - 60px);
+  transition: margin-left 0.25s cubic-bezier(.4,0,.2,1);
 }
+.main.full-width { margin-left: 0; padding-left: 60px; }
 .slide-view { max-width: 1000px; margin: 0 auto; }
 
 /* ============ SLIDE CARD ============ */

@@ -23,6 +23,7 @@ export default function App() {
   const [aiOpen, setAIOpen] = useState(false);
   const [shapePickerOpen, setShapePickerOpen] = useState(false);
   const [toolbarOpen, setToolbarOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useLocalStorageBool('sidebarOpen', true);
 
   const { blocks, add, update, remove, resize, reorder } = useBlocks(activeSlideId);
 
@@ -122,8 +123,19 @@ export default function App() {
         onNavigate={navigate}
         redactVersion={redactVersion}
         preReadVersion={preReadVersion}
+        open={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
       />
-      <div className="main">
+      {!sidebarOpen && (
+        <button
+          className="sidebar-reopen"
+          onClick={() => setSidebarOpen(true)}
+          title="Show slide list"
+        >
+          ☰
+        </button>
+      )}
+      <div className={`main${!sidebarOpen ? ' full-width' : ''}`}>
         <div className="slide-view">
           <RedactedShroud
             slideId={activeSlideId}
