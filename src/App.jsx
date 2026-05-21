@@ -16,6 +16,7 @@ export default function App() {
   const [showRedacted, setShowRedacted] = useLocalStorageBool('showRedacted', false);
   const [projectName, setProjectName] = useState(() => lsGet('f_project_name', ''));
   const [redactVersion, setRedactVersion] = useState(0);
+  const [preReadVersion, setPreReadVersion] = useState(0);
   const [statusMsg, setStatusMsg] = useState('Ready');
   const [statusColor, setStatusColor] = useState('var(--green)');
 
@@ -83,6 +84,13 @@ export default function App() {
     setRedactVersion(v => v + 1);
   }, []);
 
+  // Card dispatches a window event on preread toggle; we just bump the version.
+  useEffect(() => {
+    const bump = () => setPreReadVersion(v => v + 1);
+    window.addEventListener('preread-change', bump);
+    return () => window.removeEventListener('preread-change', bump);
+  }, []);
+
   const toggleRedaction = useCallback(() => {
     setShowRedacted(!showRedacted);
   }, [showRedacted, setShowRedacted]);
@@ -113,6 +121,7 @@ export default function App() {
         showRedacted={showRedacted}
         onNavigate={navigate}
         redactVersion={redactVersion}
+        preReadVersion={preReadVersion}
       />
       <div className="main">
         <div className="slide-view">

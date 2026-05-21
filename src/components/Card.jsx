@@ -12,7 +12,12 @@ export default function Card({ slideId, title, num, children, onRedactChange }) 
   // Pre-read: defaults from template, can be overridden via checkbox.
   const slide = allSlides.find(s => s.id === slideId);
   const templateDefault = !!slide?.preread;
-  const [preread, setPreread] = useLocalStorageBool('preread_' + slideId, templateDefault);
+  const [preread, setPrereadRaw] = useLocalStorageBool('preread_' + slideId, templateDefault);
+
+  function setPreread(v) {
+    setPrereadRaw(v);
+    window.dispatchEvent(new Event('preread-change'));
+  }
 
   if (deleted) {
     return (
