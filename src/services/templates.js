@@ -59,9 +59,13 @@ export function saveTemplate(name) {
   const trimmed = (name || '').trim();
   if (!trimmed) throw new Error('Template name required');
   const all = listTemplates();
+  if (all[trimmed]?.locked) {
+    throw new Error(`Template "${trimmed}" is locked. Unlock it first to overwrite.`);
+  }
   all[trimmed] = {
-    created: Date.now(),
+    created: all[trimmed]?.created || Date.now(),
     updated: Date.now(),
+    locked: false,
     data: captureCurrentState(),
   };
   writeTemplates(all);
@@ -85,6 +89,9 @@ export function loadTemplate(name) {
 
 export function deleteTemplate(name) {
   const all = listTemplates();
+  if (all[name]?.locked) {
+    throw new Error(`Template "${name}" is locked. Unlock it first to delete.`);
+  }
   delete all[name];
   writeTemplates(all);
 }
@@ -94,11 +101,21 @@ export function renameTemplate(oldName, newName) {
   if (!trimmed) throw new Error('New name required');
   const all = listTemplates();
   if (!all[oldName]) throw new Error('Template not found');
+  if (all[oldName].locked) {
+    throw new Error(`Template "${oldName}" is locked. Unlock it first to rename.`);
+  }
   if (all[trimmed] && trimmed !== oldName) {
     throw new Error('A template named "' + trimmed + '" already exists');
   }
   all[trimmed] = { ...all[oldName], updated: Date.now() };
   if (trimmed !== oldName) delete all[oldName];
+  writeTemplates(all);
+}
+
+export function setTemplateLocked(name, locked) {
+  const all = listTemplates();
+  if (!all[name]) throw new Error('Template not found');
+  all[name] = { ...all[name], locked: !!locked, updated: Date.now() };
   writeTemplates(all);
 }
 

@@ -7,6 +7,7 @@ import {
   renameTemplate,
   resetToBlank,
   templateSizeKB,
+  setTemplateLocked,
 } from '../services/templates.js';
 
 function fmtDate(ts) {
@@ -31,6 +32,10 @@ export default function TemplateManager({ open, onClose, onStatus }) {
       return;
     }
     if (templates[trimmed]) {
+      if (templates[trimmed].locked) {
+        alert(`Template "${trimmed}" is locked. Unlock it first to overwrite.`);
+        return;
+      }
       if (!confirm(`Overwrite existing template "${trimmed}"?`)) return;
     }
     try {
@@ -40,6 +45,20 @@ export default function TemplateManager({ open, onClose, onStatus }) {
       onStatus?.(`Template "${trimmed}" saved ✓`);
     } catch (e) {
       alert('Save failed: ' + e.message);
+    }
+  }
+
+  function onToggleLock(tplName, currentlyLocked) {
+    try {
+      setTemplateLocked(tplName, !currentlyLocked);
+      refresh();
+      onStatus?.(
+        currentlyLocked
+          ? `Template "${tplName}" unlocked`
+          : `Template "${tplName}" locked 🔒`
+      );
+    } catch (e) {
+      alert(e.message);
     }
   }
 
@@ -127,44 +146,71 @@ export default function TemplateManager({ open, onClose, onStatus }) {
               <div className="tpl-empty">No templates saved yet.</div>
             ) : (
               <div className="tpl-list">
-                {entries.map(([tplName, t]) => (
-                  <div key={tplName} className="tpl-row">
-                    <div className="tpl-row-info">
-                      {renaming?.oldName === tplName ? (
-                        <input
-                          type="text"
-                          value={renaming.newName}
-                          onChange={e => setRenaming({ ...renaming, newName: e.target.value })}
-                          onKeyDown={e => {
-                            if (e.key === 'Enter') commitRename();
-                            if (e.key === 'Escape') setRenaming(null);
-                          }}
-                          autoFocus
-                          className="tpl-rename-input"
-                        />
-                      ) : (
-                        <div className="tpl-row-name">{tplName}</div>
-                      )}
-                      <div className="tpl-row-meta">
-                        {fmtDate(t.updated || t.created)} · ~{templateSizeKB(t)} KB
+                {entries.map(([tplName, t]) => {
+                  const locked = !!t.locked;
+                  return (
+                    <div key={tplName} className={`tpl-row${locked ? ' tpl-row-locked' : ''}`}>
+                      <div className="tpl-row-info">
+                        {renaming?.oldName === tplName ? (
+                          <input
+                            type="text"
+                            value={renaming.newName}
+                            onChange={e => setRenaming({ ...renaming, newName: e.target.value })}
+                            onKeyDown={e => {
+                              if (e.key === 'Enter') commitRename();
+                              if (e.key === 'Escape') setRenaming(null);
+                            }}
+                            autoFocus
+                            className="tpl-rename-input"
+                          />
+                        ) : (
+                          <div className="tpl-row-name">
+                            {locked && <span className="tpl-lock-badge">🔒 LOCKED</span>}
+                            {tplName}
+                          </div>
+                        )}
+                        <div className="tpl-row-meta">
+                          {fmtDate(t.updated || t.created)} · ~{templateSizeKB(t)} KB
+                        </div>
+                      </div>
+                      <div className="tpl-row-actions">
+                        {renaming?.oldName === tplName ? (
+                          <>
+                            <button className="tpl-btn-ok" onClick={commitRename}>✓</button>
+                            <button className="tpl-btn-ghost" onClick={() => setRenaming(null)}>✕</button>
+                          </>
+                        ) : (
+                          <>
+                            <button className="tpl-btn-primary" onClick={() => onLoad(tplName)}>↓ Load</button>
+                            <button
+                              className={`tpl-btn-ghost${locked ? ' tpl-btn-locked' : ''}`}
+                              onClick={() => onToggleLock(tplName, locked)}
+                              title={locked ? 'Unlock — allow edits / deletion' : 'Lock — prevent edits / deletion'}
+                            >
+                              {locked ? '🔓' : '🔒'}
+                            </button>
+                            <button
+                              className="tpl-btn-ghost"
+                              onClick={() => onRename(tplName)}
+                              title={locked ? 'Locked — unlock to rename' : 'Rename'}
+                              disabled={locked}
+                            >
+                              ✎
+                            </button>
+                            <button
+                              className="tpl-btn-danger"
+                              onClick={() => onDelete(tplName)}
+                              title={locked ? 'Locked — unlock to delete' : 'Delete'}
+                              disabled={locked}
+                            >
+                              🗑
+                            </button>
+                          </>
+                        )}
                       </div>
                     </div>
-                    <div className="tpl-row-actions">
-                      {renaming?.oldName === tplName ? (
-                        <>
-                          <button className="tpl-btn-ok" onClick={commitRename}>✓</button>
-                          <button className="tpl-btn-ghost" onClick={() => setRenaming(null)}>✕</button>
-                        </>
-                      ) : (
-                        <>
-                          <button className="tpl-btn-primary" onClick={() => onLoad(tplName)}>↓ Load</button>
-                          <button className="tpl-btn-ghost" onClick={() => onRename(tplName)} title="Rename">✎</button>
-                          <button className="tpl-btn-danger" onClick={() => onDelete(tplName)} title="Delete">🗑</button>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>
