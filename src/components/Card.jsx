@@ -1,4 +1,4 @@
-import { useLocalStorage, useLocalStorageBool, lsGet } from '../hooks/useLocalStorage.js';
+import { useLocalStorage, useLocalStorageBool } from '../hooks/useLocalStorage.js';
 import { allSlides } from '../data/sections.js';
 import RedactCheck from './RedactCheck.jsx';
 import PreReadCheck from './PreReadCheck.jsx';
@@ -9,11 +9,10 @@ export default function Card({ slideId, title, num, children, onRedactChange }) 
   const [deleted, setDeleted] = useLocalStorageBool('sec_del_' + slideId, false);
   const [size, setSize] = useLocalStorage('sec_size_' + slideId, 'lg');
 
-  // Look up template default for pre-read
+  // Pre-read: defaults from template, can be overridden via checkbox.
   const slide = allSlides.find(s => s.id === slideId);
   const templateDefault = !!slide?.preread;
-  // Active state = stored override (initialized to templateDefault)
-  const preread = lsGet('preread_' + slideId, '') === '' ? templateDefault : lsGet('preread_' + slideId, '') === 'true';
+  const [preread, setPreread] = useLocalStorageBool('preread_' + slideId, templateDefault);
 
   if (deleted) {
     return (
@@ -60,7 +59,7 @@ export default function Card({ slideId, title, num, children, onRedactChange }) 
             <h2>{title}</h2>
           </div>
           <div className="card-header-checks">
-            <PreReadCheck slideId={slideId} templateDefault={templateDefault} />
+            <PreReadCheck checked={preread} onChange={setPreread} />
             <RedactCheck slideId={slideId} onChange={onRedactChange} />
           </div>
         </div>
