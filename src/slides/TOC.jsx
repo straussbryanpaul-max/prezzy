@@ -5,6 +5,12 @@ function isRedacted(sl) {
   return sl.redacted || lsGet('redact_' + sl.id, '') === 'true';
 }
 
+function isPreRead(sl) {
+  const stored = lsGet('preread_' + sl.id, '');
+  if (stored === '') return !!sl.preread;
+  return stored === 'true';
+}
+
 export default function TOC() {
   return (
     <>
@@ -19,6 +25,7 @@ export default function TOC() {
               <strong style={{ color: 'var(--navy)' }}>{sec.title}</strong>
               {sec.slides.map(sl => {
                 const redacted = isRedacted(sl);
+                const preread = isPreRead(sl);
                 return (
                   <div
                     key={sl.id}
@@ -33,8 +40,22 @@ export default function TOC() {
                   >
                     <span>{sl.num} — {sl.title}</span>
                     {redacted && (
-                      <span title="Redacted" style={{ color: 'var(--red)', fontSize: 12 }}>
-                        🔒
+                      <span title="Redacted" style={{ color: 'var(--red)', fontSize: 12 }}>🔒</span>
+                    )}
+                    {preread && !redacted && (
+                      <span
+                        title="Pre-Read Only"
+                        style={{
+                          background: '#DBEAFE',
+                          color: '#1E40AF',
+                          padding: '1px 6px',
+                          borderRadius: 4,
+                          fontSize: 9,
+                          fontWeight: 700,
+                          letterSpacing: 0.5,
+                        }}
+                      >
+                        📖 PRE-READ
                       </span>
                     )}
                   </div>

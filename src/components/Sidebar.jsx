@@ -6,6 +6,12 @@ function isSlideRedacted(id) {
   return lsGet('redact_' + id, '') === 'true';
 }
 
+function isSlidePreRead(sl) {
+  const stored = lsGet('preread_' + sl.id, '');
+  if (stored === '') return !!sl.preread;
+  return stored === 'true';
+}
+
 export default function Sidebar({ activeSlideId, showRedacted, onNavigate, redactVersion }) {
   const [collapsed, setCollapsed] = useState({});
 
@@ -30,6 +36,7 @@ export default function Sidebar({ activeSlideId, showRedacted, onNavigate, redac
               <div className="section-items">
                 {sec.slides.map(sl => {
                   const redacted = sl.redacted || isSlideRedacted(sl.id);
+                  const preread = isSlidePreRead(sl);
                   const cls =
                     (sl.id === activeSlideId ? 'active ' : '') +
                     (redacted && !showRedacted ? 'redacted-item ' : '');
@@ -43,7 +50,7 @@ export default function Sidebar({ activeSlideId, showRedacted, onNavigate, redac
                       <span>{sl.num}</span> {sl.title}
                       {redacted ? (
                         <span className="badge">🔒</span>
-                      ) : sl.preread ? (
+                      ) : preread ? (
                         <span className="badge chip chip-preread">PRE-READ</span>
                       ) : null}
                     </div>

@@ -134,6 +134,48 @@ body {
 }
 .slide-card .card-header .redact-check input { accent-color: var(--red); }
 
+.slide-card .card-header .preread-check {
+  display: flex; align-items: center; gap: 6px;
+  color: rgba(255,255,255,.75); font-size: 12px; cursor: pointer;
+}
+.slide-card .card-header .preread-check input { accent-color: var(--blue); }
+.card-header-checks {
+  display: flex; align-items: center; gap: 14px;
+}
+
+/* ============ PRE-READ BANNER ============ */
+.editable-section.is-preread {
+  border-color: var(--orange) !important;
+  box-shadow: 0 0 0 1px rgba(245, 158, 11, 0.25);
+}
+.preread-banner {
+  background: linear-gradient(135deg, #FEF3C7, #FDE68A);
+  border: 1px solid #F59E0B;
+  border-bottom: none;
+  border-radius: var(--radius) var(--radius) 0 0;
+  padding: 8px 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  position: relative;
+  z-index: 1;
+}
+.preread-banner-icon { font-size: 16px; }
+.preread-banner-text {
+  font-size: 12px;
+  color: #78350F;
+  letter-spacing: 0.3px;
+}
+.preread-banner-text strong {
+  font-weight: 800;
+  letter-spacing: 1px;
+  margin-right: 4px;
+}
+.editable-section.is-preread .slide-card {
+  border-radius: 0 0 var(--radius) var(--radius);
+}
+
 .section-divider {
   margin-bottom: 24px; padding-bottom: 12px; border-bottom: 2px solid var(--gray);
 }
