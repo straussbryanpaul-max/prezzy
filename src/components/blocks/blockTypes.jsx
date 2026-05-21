@@ -81,27 +81,31 @@ export function TableBlock({ block, onUpdate }) {
 }
 
 const IMG_SIZE_PCT = { sm: '25%', md: '50%', lg: '75%', full: '100%' };
+const ALIGN_MAP = { left: 'flex-start', center: 'center', right: 'flex-end' };
 
 export function ImageBlock({ block, onUpdate }) {
   const [src, setSrc] = useState(block.data?.src || '');
   const [imgSize, setImgSize] = useState(block.data?.imgSize || 'full');
+  const [imgAlign, setImgAlign] = useState(block.data?.imgAlign || 'center');
   const [focused, setFocused] = useState(false);
   const inputRef = useRef(null);
   const wrapRef = useRef(null);
+
+  function persist(patch) {
+    onUpdate(block.id, { src, imgSize, imgAlign, ...patch });
+  }
 
   function loadFile(file) {
     if (!file) return;
     const r = new FileReader();
     r.onload = ev => {
       setSrc(ev.target.result);
-      onUpdate(block.id, { src: ev.target.result, imgSize });
+      persist({ src: ev.target.result });
     };
     r.readAsDataURL(file);
   }
 
-  function onChange(e) {
-    loadFile(e.target.files?.[0]);
-  }
+  function onChange(e) { loadFile(e.target.files?.[0]); }
 
   function onPaste(e) {
     const items = e.clipboardData?.items || [];
@@ -119,20 +123,18 @@ export function ImageBlock({ block, onUpdate }) {
     e.stopPropagation();
     if (!confirm('Remove this image?')) return;
     setSrc('');
-    onUpdate(block.id, { src: '', imgSize });
+    persist({ src: '' });
   }
 
-  function setSize(s, e) {
-    e.stopPropagation();
-    setImgSize(s);
-    onUpdate(block.id, { src, imgSize: s });
-  }
+  function setSize(s, e) { e.stopPropagation(); setImgSize(s); persist({ imgSize: s }); }
+  function setAlign(a, e) { e.stopPropagation(); setImgAlign(a); persist({ imgAlign: a }); }
 
   return (
     <div
       ref={wrapRef}
       className={`mod-img-wrap${src ? ' has-image' : ''}${focused ? ' focused' : ''}`}
       tabIndex={0}
+      style={src ? { justifyContent: ALIGN_MAP[imgAlign] || 'center' } : undefined}
       onClick={() => {
         wrapRef.current?.focus();
         if (!src) inputRef.current?.click();
@@ -144,27 +146,29 @@ export function ImageBlock({ block, onUpdate }) {
       <input ref={inputRef} type="file" style={{ display: 'none' }} accept="image/*" onChange={onChange} />
       {src ? (
         <>
-          <img
-            src={src}
-            alt="uploaded"
-            style={{ width: IMG_SIZE_PCT[imgSize] || '100%' }}
-          />
-          <div className="img-size-bar">
-            {['sm', 'md', 'lg', 'full'].map(s => (
-              <button
-                key={s}
-                type="button"
-                className={`img-size-btn${imgSize === s ? ' active' : ''}`}
-                onClick={e => setSize(s, e)}
-                title={`Image ${s === 'full' ? 'full width' : s.toUpperCase()}`}
-              >
-                {s === 'full' ? 'L' : s === 'lg' ? 'M' : s === 'md' ? 'S' : 'XS'}
-              </button>
-            ))}
+          <img src={src} alt="uploaded" style={{ width: IMG_SIZE_PCT[imgSize] || '100%' }} />
+          <div className="img-toolbar">
+            <div className="img-tb-group">
+              {['sm', 'md', 'lg', 'full'].map(s => (
+                <button
+                  key={s}
+                  type="button"
+                  className={`img-tb-btn${imgSize === s ? ' active' : ''}`}
+                  onClick={e => setSize(s, e)}
+                  title={`Size: ${s === 'sm' ? '25%' : s === 'md' ? '50%' : s === 'lg' ? '75%' : '100%'}`}
+                >
+                  {s === 'full' ? 'L' : s === 'lg' ? 'M' : s === 'md' ? 'S' : 'XS'}
+                </button>
+              ))}
+            </div>
+            <div className="img-tb-sep" />
+            <div className="img-tb-group">
+              <button type="button" className={`img-tb-btn${imgAlign === 'left' ? ' active' : ''}`} onClick={e => setAlign('left', e)} title="Align left">⇤</button>
+              <button type="button" className={`img-tb-btn${imgAlign === 'center' ? ' active' : ''}`} onClick={e => setAlign('center', e)} title="Center">↔</button>
+              <button type="button" className={`img-tb-btn${imgAlign === 'right' ? ' active' : ''}`} onClick={e => setAlign('right', e)} title="Align right">⇥</button>
+            </div>
           </div>
-          <button type="button" className="img-upload-clear" onClick={clearImage} title="Remove image">
-            ✕ Remove
-          </button>
+          <button type="button" className="img-upload-clear" onClick={clearImage} title="Remove image">✕ Remove</button>
           <button
             type="button"
             className="img-upload-replace"
@@ -234,35 +238,135 @@ export function FileBlock() {
   );
 }
 
+const PBI_RATIOS = {
+  '16:9': 16 / 9,
+  '4:3': 4 / 3,
+  '21:9': 21 / 9,
+  square: 1,
+};
+
 export function PowerBIBlock({ block, onUpdate }) {
   const [url, setUrl] = useState(block.data?.url || '');
   const [loadedUrl, setLoadedUrl] = useState(block.data?.url || '');
+  const [ratio, setRatio] = useState(block.data?.ratio || '16:9');
+  const [customHeight, setCustomHeight] = useState(block.data?.customHeight || 480);
+  const [useCustom, setUseCustom] = useState(block.data?.useCustom || false);
+  const [showSettings, setShowSettings] = useState(false);
+  const wrapRef = useRef(null);
+
+  function persist(patch) {
+    onUpdate(block.id, { url, ratio, customHeight, useCustom, ...patch });
+  }
 
   function preview() {
     if (!url) return;
     setLoadedUrl(url);
-    onUpdate(block.id, { url });
+    persist({});
   }
 
+  function clearEmbed() {
+    if (!confirm('Clear this Power BI embed?')) return;
+    setUrl('');
+    setLoadedUrl('');
+    persist({ url: '' });
+  }
+
+  function setRatioVal(r) { setRatio(r); setUseCustom(false); persist({ ratio: r, useCustom: false }); }
+  function setHeight(h) { setCustomHeight(h); setUseCustom(true); persist({ customHeight: h, useCustom: true }); }
+
+  function fullscreen() {
+    const f = wrapRef.current?.querySelector('iframe');
+    if (!f) return;
+    if (f.requestFullscreen) f.requestFullscreen();
+    else if (f.webkitRequestFullscreen) f.webkitRequestFullscreen();
+  }
+
+  // Calculate frame style based on aspect ratio or custom height
+  const frameStyle = useCustom
+    ? { height: `${customHeight}px` }
+    : { aspectRatio: `${PBI_RATIOS[ratio]}`, height: 'auto' };
+
   return (
-    <div className="mod-pbi-wrap">
-      <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--navy)', marginBottom: 8, letterSpacing: '.3px' }}>
-        ⚡ POWER BI LIVE EMBED
+    <div className="mod-pbi-wrap" ref={wrapRef}>
+      <div className="pbi-header">
+        <span className="pbi-title">⚡ Power BI Live Embed</span>
+        <button className="pbi-cog" onClick={() => setShowSettings(s => !s)} title="Display settings">
+          ⚙ {showSettings ? 'Hide' : 'Settings'}
+        </button>
       </div>
+
       <div className="pbi-input-row">
         <input
           type="text"
-          placeholder="https://app.powerbi.com/reportEmbed?reportId=..."
+          placeholder="https://app.powerbi.com/reportEmbed?reportId=…  (or a publish-to-web URL)"
           value={url}
           onChange={e => setUrl(e.target.value)}
         />
         <button onClick={preview}>▶ Preview</button>
       </div>
-      <div className="pbi-embed-frame" style={{ minHeight: 200 }}>
+
+      {showSettings && (
+        <div className="pbi-settings">
+          <div className="pbi-settings-row">
+            <span className="pbi-settings-label">Aspect ratio</span>
+            <div className="pbi-ratio-btns">
+              {Object.keys(PBI_RATIOS).map(r => (
+                <button
+                  key={r}
+                  className={`pbi-ratio-btn${!useCustom && ratio === r ? ' active' : ''}`}
+                  onClick={() => setRatioVal(r)}
+                >
+                  {r}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="pbi-settings-row">
+            <span className="pbi-settings-label">Custom height (px)</span>
+            <input
+              type="number"
+              className="pbi-height-input"
+              value={customHeight}
+              min={200}
+              max={1200}
+              step={20}
+              onChange={e => setHeight(Number(e.target.value))}
+            />
+            <button
+              className={`pbi-ratio-btn${useCustom ? ' active' : ''}`}
+              onClick={() => { setUseCustom(true); persist({ useCustom: true }); }}
+            >
+              Use custom
+            </button>
+          </div>
+          {loadedUrl && (
+            <div className="pbi-settings-row">
+              <button className="pbi-action-btn" onClick={fullscreen}>⛶ Fullscreen</button>
+              <button className="pbi-action-btn danger" onClick={clearEmbed}>✕ Clear embed</button>
+            </div>
+          )}
+        </div>
+      )}
+
+      <div className="pbi-embed-frame" style={frameStyle}>
         {loadedUrl ? (
-          <iframe src={loadedUrl} allowFullScreen style={{ width: '100%', height: 280 }} />
+          <iframe
+            src={loadedUrl}
+            allowFullScreen
+            frameBorder="0"
+            style={{ width: '100%', height: '100%', border: 'none', display: 'block' }}
+          />
         ) : (
-          <div className="pbi-embed-ph">📊 Paste a Power BI embed URL above and click Preview</div>
+          <div className="pbi-embed-ph">
+            <div style={{ fontSize: 36, marginBottom: 8 }}>📊</div>
+            <div style={{ fontWeight: 700, fontSize: 14, color: '#fff', marginBottom: 6 }}>
+              Paste a Power BI embed URL above
+            </div>
+            <div style={{ fontSize: 11, opacity: 0.7, lineHeight: 1.6, maxWidth: 320, textAlign: 'center' }}>
+              Use the report's <strong>Publish to web</strong> URL or
+              <strong> Embed for your organization</strong> link. Default aspect ratio is 16:9 — open Settings above to change it.
+            </div>
+          </div>
         )}
       </div>
     </div>
