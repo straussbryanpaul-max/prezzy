@@ -89,14 +89,25 @@ body {
 .section-header.collapsed .arrow { transform: rotate(-90deg); }
 .section-items { padding: 0; }
 .slide-item {
-  padding: 8px 16px 8px 32px; font-size: 12px; color: var(--gray3);
+  padding: 8px 16px 8px 28px; font-size: 12px; color: var(--gray3);
   cursor: pointer; display: flex; align-items: center; gap: 8px;
-  transition: var(--transition); border-left: 3px solid transparent;
+  transition: var(--transition); border-left: 4px solid transparent;
 }
 .slide-item:hover { background: var(--light); color: var(--navy); }
 .slide-item.active {
-  background: rgba(0,120,212,.06); color: var(--blue);
-  border-left-color: var(--blue); font-weight: 600;
+  background: rgba(232, 41, 11, 0.10);
+  color: var(--red);
+  border-left-color: var(--red);
+  border-left-width: 5px;
+  padding-left: 27px;
+  font-weight: 700;
+  box-shadow: inset 0 0 0 1px rgba(232, 41, 11, 0.15);
+}
+.slide-item.active::before {
+  content: '▸';
+  color: var(--red);
+  font-size: 11px;
+  margin-right: 4px;
 }
 .slide-item .badge { font-size: 10px; margin-left: auto; }
 .slide-item.redacted-item { opacity: .5; }
@@ -965,8 +976,11 @@ body {
   .slide-card { break-inside: avoid; box-shadow: none; border: 1px solid #ddd; }
 }
 
-@keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
-.slide-view { animation: fadeIn .3s ease; }
+@keyframes slideIn {
+  from { opacity: 0; transform: translateX(20px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+.slide-view { animation: slideIn .25s cubic-bezier(.4,0,.2,1); }
 
 /* ============ EDITABLE SECTION (resize / delete pre-built cards) ============ */
 .editable-section {
