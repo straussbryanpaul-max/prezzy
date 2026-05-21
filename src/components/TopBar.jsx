@@ -6,8 +6,6 @@ export default function TopBar({
   showRedacted,
   onToggleRedaction,
   onToggleAI,
-  onToggleNotes,
-  onOpenFileModal,
 }) {
   const [apiKey, setApiKey] = useState(() => lsGet('apiKey', ''));
 
@@ -37,9 +35,7 @@ export default function TopBar({
             onChange={e => onApiKeyChange(e.target.value)}
           />
         </div>
-        <button onClick={onToggleAI}>🤖 AI Assistant</button>
-        <button onClick={onOpenFileModal}>📎 AI Files</button>
-        <button onClick={onToggleNotes}>⚡ Estimator Notes</button>
+        <button onClick={onToggleAI}>🤖 AI</button>
         <button
           className={`redact-toggle${showRedacted ? ' active' : ''}`}
           onClick={onToggleRedaction}

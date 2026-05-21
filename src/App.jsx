@@ -3,8 +3,6 @@ import TopBar from './components/TopBar.jsx';
 import Sidebar from './components/Sidebar.jsx';
 import StatusBar from './components/StatusBar.jsx';
 import AIPanel from './components/AIPanel.jsx';
-import NotesDrawer from './components/NotesDrawer.jsx';
-import FileModal from './components/FileModal.jsx';
 import BlockToolbar from './components/blocks/BlockToolbar.jsx';
 import BlockContainer from './components/blocks/BlockContainer.jsx';
 import ShapePicker from './components/blocks/ShapePicker.jsx';
@@ -22,8 +20,6 @@ export default function App() {
   const [statusColor, setStatusColor] = useState('var(--green)');
 
   const [aiOpen, setAIOpen] = useState(false);
-  const [notesOpen, setNotesOpen] = useState(false);
-  const [fileOpen, setFileOpen] = useState(false);
   const [shapePickerOpen, setShapePickerOpen] = useState(false);
   const [toolbarOpen, setToolbarOpen] = useState(true);
 
@@ -39,13 +35,19 @@ export default function App() {
     };
   }, []);
 
+  const setStatus = useCallback((msg, color) => {
+    setStatusMsg(msg);
+    setStatusColor(color || 'var(--green)');
+    if (color !== 'var(--orange)') {
+      setTimeout(() => setStatusMsg('Ready'), 3000);
+    }
+  }, []);
+
   // Global paste: if clipboard has an image, create an image block on current slide
   useEffect(() => {
     function onPaste(e) {
-      // Don't hijack pastes into text inputs/areas
       const t = e.target;
       if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) {
-        // Allow normal text paste; but if it has an image alongside, still grab the image
         const items = e.clipboardData?.items || [];
         const hasImage = Array.from(items).some(i => i.type.startsWith('image/'));
         if (!hasImage) return;
@@ -85,14 +87,6 @@ export default function App() {
     setShowRedacted(!showRedacted);
   }, [showRedacted, setShowRedacted]);
 
-  const setStatus = useCallback((msg, color) => {
-    setStatusMsg(msg);
-    setStatusColor(color || 'var(--green)');
-    if (color !== 'var(--orange)') {
-      setTimeout(() => setStatusMsg('Ready'), 3000);
-    }
-  }, []);
-
   function addBlock(type) {
     if (type === 'shape') {
       setShapePickerOpen(true);
@@ -113,8 +107,6 @@ export default function App() {
         showRedacted={showRedacted}
         onToggleRedaction={toggleRedaction}
         onToggleAI={() => setAIOpen(o => !o)}
-        onToggleNotes={() => setNotesOpen(o => !o)}
-        onOpenFileModal={() => setFileOpen(true)}
       />
       <Sidebar
         activeSlideId={activeSlideId}
@@ -140,9 +132,7 @@ export default function App() {
           </RedactedShroud>
         </div>
       </div>
-      <AIPanel open={aiOpen} onClose={() => setAIOpen(false)} />
-      <NotesDrawer open={notesOpen} onClose={() => setNotesOpen(false)} onStatus={setStatus} />
-      <FileModal open={fileOpen} onClose={() => setFileOpen(false)} onStatus={setStatus} />
+      <AIPanel open={aiOpen} onClose={() => setAIOpen(false)} onStatus={setStatus} />
       {toolbarOpen ? (
         <BlockToolbar onAdd={addBlock} onClose={() => setToolbarOpen(false)} />
       ) : (
