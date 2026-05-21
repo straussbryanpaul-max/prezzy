@@ -6,6 +6,14 @@ export default function EditableChunk({ id, label, children }) {
   const [deleted, setDeleted] = useLocalStorageBool('chunk_del_' + id, false);
   const [size, setSize] = useLocalStorage('chunk_size_' + id, 'lg');
 
+  function breakOut() {
+    window.dispatchEvent(
+      new CustomEvent('chunk-break-out', {
+        detail: { chunkId: id, label: label || 'New Slide' },
+      })
+    );
+  }
+
   if (deleted) {
     return (
       <div className="deleted-chunk-ghost" onClick={() => setDeleted(false)}>
@@ -56,6 +64,13 @@ export default function EditableChunk({ id, label, children }) {
           L
         </button>
         <span className="chunk-ctl-sep" />
+        <button
+          className="chunk-ctl chunk-ctl-breakout"
+          onClick={breakOut}
+          title="Break out into its own numbered slide (creates an empty new slide; rebuild content there)"
+        >
+          ↗ Split off
+        </button>
         <button
           className="chunk-ctl del"
           onClick={() => setDeleted(true)}

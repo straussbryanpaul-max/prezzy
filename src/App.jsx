@@ -129,6 +129,29 @@ export default function App() {
     }
   }
 
+  // EditableChunks (pre-built sections) can't have their static JSX content
+  // moved, but they can still "split off" — creates an empty new slide that
+  // the user populates with modular blocks.
+  useEffect(() => {
+    function onChunkBreakOut(e) {
+      const label = e.detail?.label || 'New Slide';
+      const title = window.prompt(
+        'Title for the new slide:\n\n(This creates an EMPTY new slide — the original section stays put. Add modular blocks on the new slide to recreate the content.)',
+        label
+      );
+      if (!title) return;
+      import('./services/customSlides.js').then(({ createCustomSlide }) => {
+        const newId = createCustomSlide(title);
+        setActiveSlideId(newId);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        setStatus(`✓ New slide "${title}" created`);
+      });
+    }
+    window.addEventListener('chunk-break-out', onChunkBreakOut);
+    return () => window.removeEventListener('chunk-break-out', onChunkBreakOut);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   function onShapeConfirm({ emoji, color }) {
     add('shape', { emoji, color });
     setShapePickerOpen(false);

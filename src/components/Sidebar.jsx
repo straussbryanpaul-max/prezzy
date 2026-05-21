@@ -86,11 +86,14 @@ export default function Sidebar({
                       onClick={() => onNavigate(sl.id)}
                     >
                       <span>{sl.num}</span> {sl.title}
-                      {redacted ? (
-                        <span className="badge">🔒</span>
-                      ) : preread ? (
-                        <span className="badge chip chip-preread">PRE-READ</span>
-                      ) : null}
+                      <span className="sidebar-badges">
+                        {preread && (
+                          <span className="badge chip chip-preread">PRE-READ</span>
+                        )}
+                        {redacted && (
+                          <span className="badge">🔒</span>
+                        )}
+                      </span>
                     </div>
                   );
                 })}

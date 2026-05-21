@@ -39,10 +39,7 @@ export default function TOC() {
                     }}
                   >
                     <span>{sl.num} — {sl.title}</span>
-                    {redacted && (
-                      <span title="Redacted" style={{ color: 'var(--red)', fontSize: 12 }}>🔒</span>
-                    )}
-                    {preread && !redacted && (
+                    {preread && (
                       <span
                         title="Pre-Read Only"
                         style={{
@@ -57,6 +54,9 @@ export default function TOC() {
                       >
                         📖 PRE-READ
                       </span>
+                    )}
+                    {redacted && (
+                      <span title="Redacted" style={{ color: 'var(--red)', fontSize: 12 }}>🔒</span>
                     )}
                   </div>
                 );

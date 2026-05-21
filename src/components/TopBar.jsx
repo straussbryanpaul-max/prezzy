@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { lsGet, lsSet } from '../hooks/useLocalStorage.js';
+import { getCurrentTemplateName } from '../services/templates.js';
 
 export default function TopBar({
   projectName,
@@ -12,10 +13,17 @@ export default function TopBar({
   onPresent,
 }) {
   const [apiKey, setApiKey] = useState(() => lsGet('apiKey', ''));
+  const [templateName, setTemplateName] = useState(() => getCurrentTemplateName());
 
   useEffect(() => {
     window._apiKey = apiKey;
   }, [apiKey]);
+
+  useEffect(() => {
+    const refresh = () => setTemplateName(getCurrentTemplateName());
+    window.addEventListener('current-template-change', refresh);
+    return () => window.removeEventListener('current-template-change', refresh);
+  }, []);
 
   function onApiKeyChange(v) {
     setApiKey(v);
@@ -27,7 +35,18 @@ export default function TopBar({
       <div className="logo">
         📊 Estimate Basis Builder <span>M&T</span>
       </div>
-      <div className="project-name">{projectName || 'No Project Selected'}</div>
+      <div className="project-name">
+        {projectName || 'No Project Selected'}
+        {templateName ? (
+          <span className="template-tag" title="Loaded template">
+            📑 {templateName}
+          </span>
+        ) : (
+          <span className="template-tag template-tag-none" title="No template loaded — using the default starting layout">
+            📑 No template (default)
+          </span>
+        )}
+      </div>
       <div className="controls">
         <div className="api-wrap">
           <div className={`api-dot${apiKey.length > 20 ? ' on' : ''}`} />

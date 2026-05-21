@@ -10,6 +10,7 @@
 // they want to reuse. Loading replaces the current state.
 
 const TEMPLATES_KEY = 'boe_templates';
+const CURRENT_TEMPLATE_KEY = 'current_template';
 
 // Keys preserved across template loads — UI-only state, not project content.
 const PRESERVE_KEYS = new Set([
@@ -17,7 +18,21 @@ const PRESERVE_KEYS = new Set([
   'showRedacted',
   'sidebarOpen',
   'ai_extract_instr',
+  CURRENT_TEMPLATE_KEY,
 ]);
+
+export function getCurrentTemplateName() {
+  return window.localStorage.getItem(CURRENT_TEMPLATE_KEY) || '';
+}
+
+function setCurrentTemplateName(name) {
+  if (name) {
+    window.localStorage.setItem(CURRENT_TEMPLATE_KEY, name);
+  } else {
+    window.localStorage.removeItem(CURRENT_TEMPLATE_KEY);
+  }
+  window.dispatchEvent(new Event('current-template-change'));
+}
 
 function shouldCapture(key) {
   if (!key) return false;
@@ -65,10 +80,12 @@ export function saveTemplate(name) {
   all[trimmed] = {
     created: all[trimmed]?.created || Date.now(),
     updated: Date.now(),
-    locked: false,
+    locked: all[trimmed]?.locked || false,
     data: captureCurrentState(),
   };
   writeTemplates(all);
+  // Treat the most recently-saved template as the "current" one
+  setCurrentTemplateName(trimmed);
   return all[trimmed];
 }
 
@@ -85,6 +102,7 @@ export function loadTemplate(name) {
   Object.entries(t.data).forEach(([k, v]) => {
     if (v != null) window.localStorage.setItem(k, v);
   });
+  setCurrentTemplateName(name);
 }
 
 export function deleteTemplate(name) {
@@ -94,6 +112,9 @@ export function deleteTemplate(name) {
   }
   delete all[name];
   writeTemplates(all);
+  if (getCurrentTemplateName() === name) {
+    setCurrentTemplateName('');
+  }
 }
 
 export function renameTemplate(oldName, newName) {
@@ -110,6 +131,9 @@ export function renameTemplate(oldName, newName) {
   all[trimmed] = { ...all[oldName], updated: Date.now() };
   if (trimmed !== oldName) delete all[oldName];
   writeTemplates(all);
+  if (getCurrentTemplateName() === oldName) {
+    setCurrentTemplateName(trimmed);
+  }
 }
 
 export function setTemplateLocked(name, locked) {
@@ -123,6 +147,7 @@ export function resetToBlank() {
   for (const k of getAllCapturableKeys()) {
     window.localStorage.removeItem(k);
   }
+  setCurrentTemplateName('');
 }
 
 // Rough size in KB, useful for the UI.
