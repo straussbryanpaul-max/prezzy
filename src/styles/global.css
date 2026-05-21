@@ -276,6 +276,80 @@ body {
 .img-upload.focused .img-upload-clear,
 .img-upload.focused .img-upload-replace { opacity: 1; }
 
+.img-size-bar {
+  position: absolute;
+  bottom: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 2px;
+  background: rgba(30, 45, 56, 0.85);
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 20px;
+  padding: 3px 6px;
+  opacity: 0;
+  transition: opacity .15s;
+  z-index: 2;
+}
+.img-upload.has-image:hover .img-size-bar,
+.img-upload.focused .img-size-bar,
+.mod-img-wrap.has-image:hover .img-size-bar,
+.mod-img-wrap.focused .img-size-bar { opacity: 1; }
+.img-size-btn {
+  background: none;
+  border: none;
+  color: rgba(255,255,255,0.75);
+  font-size: 10px;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 3px 8px;
+  border-radius: 3px;
+  font-family: inherit;
+  letter-spacing: 0.3px;
+  line-height: 1;
+}
+.img-size-btn:hover { background: rgba(255,255,255,0.15); color: #fff; }
+.img-size-btn.active { background: var(--blue); color: #fff; }
+
+/* Modular image block matching styles */
+.mod-img-wrap { outline: none; }
+.mod-img-wrap.focused {
+  border-color: var(--blue);
+  box-shadow: 0 0 0 3px rgba(0,120,212,.15);
+}
+.mod-img-wrap.has-image {
+  padding: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: #fafbfc;
+}
+.mod-img-wrap.has-image img { height: auto; }
+.mod-img-wrap .img-upload-clear,
+.mod-img-wrap .img-upload-replace {
+  position: absolute;
+  background: rgba(30, 45, 56, 0.85);
+  color: #fff;
+  border: 1px solid rgba(255,255,255,0.2);
+  padding: 5px 10px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  opacity: 0;
+  transition: opacity .15s;
+  z-index: 2;
+}
+.mod-img-wrap .img-upload-clear { top: 8px; right: 8px; }
+.mod-img-wrap .img-upload-clear:hover { background: var(--red); border-color: var(--red); }
+.mod-img-wrap .img-upload-replace { top: 8px; right: 90px; }
+.mod-img-wrap .img-upload-replace:hover { background: var(--blue); border-color: var(--blue); }
+.mod-img-wrap.has-image:hover .img-upload-clear,
+.mod-img-wrap.has-image:hover .img-upload-replace,
+.mod-img-wrap.focused .img-upload-clear,
+.mod-img-wrap.focused .img-upload-replace { opacity: 1; }
+
 /* ============ DISCIPLINE TABS ============ */
 .discipline-tabs {
   display: flex; gap: 4px; margin-bottom: 20px;

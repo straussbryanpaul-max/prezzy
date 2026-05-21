@@ -1,8 +1,11 @@
 import { useRef, useState } from 'react';
 import { useLocalStorage } from '../hooks/useLocalStorage.js';
 
+const IMG_SIZE_PCT = { sm: '25%', md: '50%', lg: '75%', full: '100%' };
+
 export default function ImageUpload({ name }) {
   const [src, setSrc] = useLocalStorage('img_' + name, '');
+  const [imgSize, setImgSize] = useLocalStorage('img_size_' + name, 'full');
   const [focused, setFocused] = useState(false);
   const inputRef = useRef(null);
   const wrapRef = useRef(null);
@@ -36,6 +39,11 @@ export default function ImageUpload({ name }) {
     setSrc('');
   }
 
+  function setSize(s, e) {
+    e.stopPropagation();
+    setImgSize(s);
+  }
+
   return (
     <div
       ref={wrapRef}
@@ -52,7 +60,24 @@ export default function ImageUpload({ name }) {
       <input ref={inputRef} type="file" accept="image/*" onChange={onChange} />
       {src ? (
         <>
-          <img src={src} alt="uploaded" />
+          <img
+            src={src}
+            alt="uploaded"
+            style={{ width: IMG_SIZE_PCT[imgSize] || '100%' }}
+          />
+          <div className="img-size-bar">
+            {['sm', 'md', 'lg', 'full'].map(s => (
+              <button
+                key={s}
+                type="button"
+                className={`img-size-btn${imgSize === s ? ' active' : ''}`}
+                onClick={e => setSize(s, e)}
+                title={`Image ${s === 'full' ? 'full width' : s.toUpperCase()}`}
+              >
+                {s === 'full' ? 'L' : s === 'lg' ? 'M' : s === 'md' ? 'S' : 'XS'}
+              </button>
+            ))}
+          </div>
           <button
             type="button"
             className="img-upload-clear"
