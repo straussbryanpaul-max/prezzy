@@ -5,6 +5,8 @@ import StatusBar from './components/StatusBar.jsx';
 import AIPanel from './components/AIPanel.jsx';
 import TemplateManager from './components/TemplateManager.jsx';
 import PrintView from './components/PrintView.jsx';
+import StatusView from './components/StatusView.jsx';
+import PresentationView from './components/PresentationView.jsx';
 import BlockToolbar from './components/blocks/BlockToolbar.jsx';
 import BlockContainer from './components/blocks/BlockContainer.jsx';
 import ShapePicker from './components/blocks/ShapePicker.jsx';
@@ -28,6 +30,8 @@ export default function App() {
   const [sidebarOpen, setSidebarOpen] = useLocalStorageBool('sidebarOpen', true);
   const [templatesOpen, setTemplatesOpen] = useState(false);
   const [printMode, setPrintMode] = useState(false);
+  const [statusOpen, setStatusOpen] = useState(false);
+  const [presentMode, setPresentMode] = useState(false);
 
   const { blocks, add, update, remove, resize, reorder } = useBlocks(activeSlideId);
 
@@ -122,6 +126,8 @@ export default function App() {
         onToggleAI={() => setAIOpen(o => !o)}
         onToggleTemplates={() => setTemplatesOpen(o => !o)}
         onPrint={() => setPrintMode(true)}
+        onOpenStatus={() => setStatusOpen(true)}
+        onPresent={() => setPresentMode(true)}
       />
       {printMode && (
         <PrintView showRedacted={showRedacted} onAfterPrint={() => setPrintMode(false)} />
@@ -164,6 +170,14 @@ export default function App() {
       </div>
       <AIPanel open={aiOpen} onClose={() => setAIOpen(false)} onStatus={setStatus} />
       <TemplateManager open={templatesOpen} onClose={() => setTemplatesOpen(false)} onStatus={setStatus} />
+      <StatusView open={statusOpen} onClose={() => setStatusOpen(false)} onNavigate={navigate} />
+      {presentMode && (
+        <PresentationView
+          initialSlideId={activeSlideId}
+          showRedacted={showRedacted}
+          onExit={() => setPresentMode(false)}
+        />
+      )}
       {toolbarOpen ? (
         <BlockToolbar onAdd={addBlock} onClose={() => setToolbarOpen(false)} />
       ) : (

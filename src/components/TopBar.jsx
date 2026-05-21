@@ -8,6 +8,8 @@ export default function TopBar({
   onToggleAI,
   onToggleTemplates,
   onPrint,
+  onOpenStatus,
+  onPresent,
 }) {
   const [apiKey, setApiKey] = useState(() => lsGet('apiKey', ''));
 
@@ -38,6 +40,8 @@ export default function TopBar({
           />
         </div>
         <button onClick={onToggleAI}>🤖 AI</button>
+        <button onClick={onOpenStatus}>📊 Status</button>
+        <button onClick={onPresent}>▶ Present</button>
         <button onClick={onToggleTemplates}>📑 Templates</button>
         <button
           className={`redact-toggle${showRedacted ? ' active' : ''}`}

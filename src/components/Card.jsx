@@ -2,6 +2,7 @@ import { useLocalStorage, useLocalStorageBool } from '../hooks/useLocalStorage.j
 import { allSlides } from '../data/sections.js';
 import RedactCheck from './RedactCheck.jsx';
 import PreReadCheck from './PreReadCheck.jsx';
+import Assignee from './Assignee.jsx';
 
 const SIZE_MAP = { sm: '40%', md: '65%', half: '50%', lg: '100%' };
 
@@ -62,6 +63,7 @@ export default function Card({ slideId, title, num, children, onRedactChange }) 
           <div>
             <div className="slide-num">{num}</div>
             <h2>{title}</h2>
+            <Assignee slideId={slideId} />
           </div>
           <div className="card-header-checks">
             <PreReadCheck checked={preread} onChange={setPreread} />
