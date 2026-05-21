@@ -348,27 +348,70 @@ export function PowerBIBlock({ block, onUpdate }) {
         </div>
       )}
 
-      <div className="pbi-embed-frame" style={frameStyle}>
-        {loadedUrl ? (
-          <iframe
-            src={loadedUrl}
-            allowFullScreen
-            frameBorder="0"
-            style={{ width: '100%', height: '100%', border: 'none', display: 'block' }}
+      <div className="pbi-embed-wrap">
+        <div className="pbi-embed-frame" style={frameStyle}>
+          {loadedUrl ? (
+            <iframe
+              src={loadedUrl}
+              allowFullScreen
+              frameBorder="0"
+              style={{ width: '100%', height: '100%', border: 'none', display: 'block', pointerEvents: 'auto' }}
+            />
+          ) : (
+            <div className="pbi-embed-ph">
+              <div style={{ fontSize: 36, marginBottom: 8 }}>📊</div>
+              <div style={{ fontWeight: 700, fontSize: 14, color: '#fff', marginBottom: 6 }}>
+                Paste a Power BI embed URL above
+              </div>
+              <div style={{ fontSize: 11, opacity: 0.7, lineHeight: 1.6, maxWidth: 320, textAlign: 'center' }}>
+                Use the report's <strong>Publish to web</strong> URL or
+                <strong> Embed for your organization</strong> link. Default aspect ratio is 16:9 — open Settings above to change it.
+              </div>
+            </div>
+          )}
+        </div>
+        {loadedUrl && (
+          <PbiResizeHandle
+            currentHeight={useCustom ? customHeight : null}
+            onResize={h => setHeight(h)}
+            frameRef={wrapRef}
           />
-        ) : (
-          <div className="pbi-embed-ph">
-            <div style={{ fontSize: 36, marginBottom: 8 }}>📊</div>
-            <div style={{ fontWeight: 700, fontSize: 14, color: '#fff', marginBottom: 6 }}>
-              Paste a Power BI embed URL above
-            </div>
-            <div style={{ fontSize: 11, opacity: 0.7, lineHeight: 1.6, maxWidth: 320, textAlign: 'center' }}>
-              Use the report's <strong>Publish to web</strong> URL or
-              <strong> Embed for your organization</strong> link. Default aspect ratio is 16:9 — open Settings above to change it.
-            </div>
-          </div>
         )}
       </div>
+    </div>
+  );
+}
+
+function PbiResizeHandle({ currentHeight, onResize, frameRef }) {
+  const startRef = useRef(null);
+
+  function onMouseDown(e) {
+    e.preventDefault();
+    const startY = e.clientY;
+    const frame = frameRef.current?.querySelector('.pbi-embed-frame');
+    const startH = frame?.getBoundingClientRect().height || currentHeight || 400;
+    startRef.current = { startY, startH };
+
+    function onMove(ev) {
+      const dy = ev.clientY - startY;
+      const newH = Math.max(180, Math.min(1500, Math.round(startH + dy)));
+      onResize(newH);
+    }
+    function onUp() {
+      document.removeEventListener('mousemove', onMove);
+      document.removeEventListener('mouseup', onUp);
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+    }
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onUp);
+    document.body.style.cursor = 'ns-resize';
+    document.body.style.userSelect = 'none';
+  }
+
+  return (
+    <div className="pbi-resize-handle" onMouseDown={onMouseDown} title="Drag to resize height">
+      <div className="pbi-resize-grip">⋯</div>
     </div>
   );
 }
