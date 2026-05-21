@@ -15,6 +15,7 @@ const STATUS_LABELS = {
 
 export default function StatusView({ open, onClose, onNavigate }) {
   const [data, setData] = useState(() => packageStatus());
+  const [groupBy, setGroupBy] = useState('assignee'); // 'assignee' | 'flat'
 
   // Refresh status when modal opens or any assignment/completion changes
   useEffect(() => {
@@ -32,8 +33,6 @@ export default function StatusView({ open, onClose, onNavigate }) {
   }, [open]);
 
   if (!open) return null;
-
-  const [groupBy, setGroupBy] = useState('assignee'); // 'assignee' | 'flat'
 
   const assignees = Object.entries(data.byAssignee).sort(([a], [b]) => {
     if (a === '(unassigned)') return 1;
