@@ -2,7 +2,16 @@ import { useState, useRef } from 'react';
 
 const SIZE_MAP = { sm: '40%', md: '65%', lg: '100%', half: '50%' };
 
-export default function Block({ block, onDelete, onResize, onDragStart, onDragOver, onDrop, children }) {
+export default function Block({
+  block,
+  onDelete,
+  onResize,
+  onBreakOut,
+  onDragStart,
+  onDragOver,
+  onDrop,
+  children,
+}) {
   const [selected, setSelected] = useState(false);
   const ref = useRef(null);
 
@@ -36,6 +45,13 @@ export default function Block({ block, onDelete, onResize, onDragStart, onDragOv
         <span className="bc-btn" onClick={() => onResize(block.id, 'lg')} title="Full">L</span>
         <span className="bc-btn" onClick={() => onResize(block.id, 'half')} title="Half width">½</span>
         <span style={{ width: 1, height: 14, background: 'rgba(255,255,255,.2)', margin: '0 2px', display: 'inline-block' }}></span>
+        <span
+          className="bc-btn"
+          onClick={() => onBreakOut?.(block.id)}
+          title="Break out into its own numbered slide"
+        >
+          ↗
+        </span>
         <span className="bc-btn del" onClick={() => onDelete(block.id)} title="Delete">🗑</span>
       </div>
       <div className="block-inner">{children}</div>

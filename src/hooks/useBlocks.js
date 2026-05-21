@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { createCustomSlide } from '../services/customSlides.js';
 
 export function useBlocks(slideId) {
   const key = 'blocks_' + slideId;
@@ -70,5 +71,26 @@ export function useBlocks(slideId) {
     [blocks, key]
   );
 
-  return { blocks, add, update, remove, resize, reorder };
+  // Break a block out of this slide into a brand new custom slide.
+  // Returns the new slide's id (so the caller can navigate to it).
+  const breakOut = useCallback(
+    (blockId, title) => {
+      const block = blocks.find(b => b.id === blockId);
+      if (!block) return null;
+      const newSlideId = createCustomSlide(title);
+      // Remove from this slide
+      const remaining = blocks.filter(b => b.id !== blockId);
+      persist(remaining);
+      // Plant in the new slide
+      try {
+        window.localStorage.setItem('blocks_' + newSlideId, JSON.stringify([block]));
+      } catch {
+        // ignore
+      }
+      return newSlideId;
+    },
+    [blocks, key]
+  );
+
+  return { blocks, add, update, remove, resize, reorder, breakOut };
 }

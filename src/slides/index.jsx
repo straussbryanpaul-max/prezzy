@@ -2,6 +2,7 @@ import GenericSlide from './GenericSlide.jsx';
 import { allSlides } from '../data/sections.js';
 import { DISCIPLINES } from '../data/constants.js';
 import DisciplineSlide from './DisciplineSlide.jsx';
+import CustomSlide from './CustomSlide.jsx';
 
 import Cover from './Cover.jsx';
 import Agenda from './Agenda.jsx';
@@ -89,7 +90,18 @@ const COMPONENT_MAP = {
   appendix: Appendix,
 };
 
-export default function SlideRouter({ slideId, onRedactChange }) {
+export default function SlideRouter({ slideId, onRedactChange, onNavigateHome }) {
+  // Custom (user-created) slides
+  if (slideId.startsWith('custom_')) {
+    return (
+      <CustomSlide
+        slideId={slideId}
+        onRedactChange={onRedactChange}
+        onNavigateHome={onNavigateHome}
+      />
+    );
+  }
+
   // Discipline detail slides: disc_civil, disc_concrete, etc.
   if (slideId.startsWith('disc_')) {
     const discId = slideId.slice(5);

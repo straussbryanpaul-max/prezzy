@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { sections } from '../data/sections.js';
 import { lsGet } from '../hooks/useLocalStorage.js';
+import { getCustomSlides } from '../services/customSlides.js';
 
 function isSlideRedacted(id) {
   return lsGet('redact_' + id, '') === 'true';
@@ -18,10 +19,16 @@ export default function Sidebar({
   onNavigate,
   redactVersion,
   preReadVersion,
+  customSlidesVersion,
   open = true,
   onClose,
 }) {
   const [collapsed, setCollapsed] = useState({});
+  const [customSlides, setCustomSlides] = useState(() => getCustomSlides());
+
+  useEffect(() => {
+    setCustomSlides(getCustomSlides());
+  }, [customSlidesVersion]);
 
   function toggleSection(id) {
     setCollapsed(prev => ({ ...prev, [id]: !prev[id] }));
@@ -32,7 +39,11 @@ export default function Sidebar({
       <button className="sidebar-close" onClick={onClose} title="Hide sidebar">
         ◀
       </button>
-      {sections.map(sec => {
+      {[...sections, ...(customSlides.length ? [{
+        id: 's_custom',
+        title: '✨ Custom Slides',
+        slides: customSlides,
+      }] : [])].map(sec => {
         const isCollapsed = !!collapsed[sec.id];
         return (
           <div key={sec.id} className="section-group">

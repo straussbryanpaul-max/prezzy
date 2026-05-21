@@ -33,7 +33,13 @@ export default function App() {
   const [statusOpen, setStatusOpen] = useState(false);
   const [presentMode, setPresentMode] = useState(false);
 
-  const { blocks, add, update, remove, resize, reorder } = useBlocks(activeSlideId);
+  const { blocks, add, update, remove, resize, reorder, breakOut } = useBlocks(activeSlideId);
+  const [customSlidesVersion, setCustomSlidesVersion] = useState(0);
+  useEffect(() => {
+    const bump = () => setCustomSlidesVersion(v => v + 1);
+    window.addEventListener('custom-slides-change', bump);
+    return () => window.removeEventListener('custom-slides-change', bump);
+  }, []);
 
   useEffect(() => {
     const handler = () => setProjectName(lsGet('f_project_name', ''));
@@ -112,6 +118,17 @@ export default function App() {
     add(type);
   }
 
+  function onBreakOut(blockId) {
+    const title = window.prompt('Title for the new slide:', 'New Custom Slide');
+    if (!title) return;
+    const newId = breakOut(blockId, title);
+    if (newId) {
+      setActiveSlideId(newId);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      setStatus(`✓ Broke out to new slide "${title}"`);
+    }
+  }
+
   function onShapeConfirm({ emoji, color }) {
     add('shape', { emoji, color });
     setShapePickerOpen(false);
@@ -138,6 +155,7 @@ export default function App() {
         onNavigate={navigate}
         redactVersion={redactVersion}
         preReadVersion={preReadVersion}
+        customSlidesVersion={customSlidesVersion}
         open={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
       />
@@ -157,13 +175,18 @@ export default function App() {
             showRedacted={showRedacted}
             redactVersion={redactVersion}
           >
-            <SlideRouter slideId={activeSlideId} onRedactChange={onRedactChange} />
+            <SlideRouter
+              slideId={activeSlideId}
+              onRedactChange={onRedactChange}
+              onNavigateHome={() => navigate('cover')}
+            />
             <BlockContainer
               blocks={blocks}
               onUpdate={update}
               onDelete={remove}
               onResize={resize}
               onReorder={reorder}
+              onBreakOut={onBreakOut}
             />
           </RedactedShroud>
         </div>

@@ -11,7 +11,7 @@ const TYPE_COMPONENTS = {
   shape: ShapeBlock,
 };
 
-export default function BlockContainer({ blocks, onUpdate, onDelete, onResize, onReorder }) {
+export default function BlockContainer({ blocks, onUpdate, onDelete, onResize, onReorder, onBreakOut }) {
   const dragSrc = useRef(null);
 
   function onDragStart(e, id) {
@@ -41,6 +41,7 @@ export default function BlockContainer({ blocks, onUpdate, onDelete, onResize, o
             block={b}
             onDelete={onDelete}
             onResize={onResize}
+            onBreakOut={onBreakOut}
             onDragStart={onDragStart}
             onDragOver={onDragOver}
             onDrop={onDrop}
