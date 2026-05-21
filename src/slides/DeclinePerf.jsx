@@ -1,6 +1,7 @@
 import Card from '../components/Card.jsx';
 import Guidance from '../components/Guidance.jsx';
 import BrainDump from '../components/BrainDump.jsx';
+import EditableChunk from '../components/EditableChunk.jsx';
 import { Select } from '../components/Field.jsx';
 
 const ITEMS = [
@@ -39,20 +40,22 @@ const ITEMS = [
 export default function DeclinePerf({ onRedactChange }) {
   return (
     <Card slideId="decline_perf" title="Declining Performance Checklist" num="06.008" onRedactChange={onRedactChange}>
-      <Guidance>Roll up declining performance checklist and evaluate R/Y/G for each category. See MT-GBU-EDT-0015-RevA for detailed criteria.</Guidance>
-      <table className="data-table">
-        <thead><tr><th>Checklist Item</th><th>Status</th></tr></thead>
-        <tbody>
-          {ITEMS.map((item, i) => (
-            <tr key={i}>
-              <td style={{ fontSize: 12 }}>{item}</td>
-              <td style={{ width: 120 }}>
-                <Select name={`dpc_${i}`} options={['Yes', 'No', 'N/A', 'Partial']} />
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      <Guidance>Roll up declining performance checklist and evaluate R/Y/G for each category.</Guidance>
+      <EditableChunk id="decline_perf:table" label="Checklist table">
+        <table className="data-table">
+          <thead><tr><th>Checklist Item</th><th>Status</th></tr></thead>
+          <tbody>
+            {ITEMS.map((item, i) => (
+              <tr key={i}>
+                <td style={{ fontSize: 12 }}>{item}</td>
+                <td style={{ width: 120 }}>
+                  <Select name={`dpc_${i}`} options={['Yes', 'No', 'N/A', 'Partial']} />
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </EditableChunk>
       <BrainDump slideId="decline_perf" />
     </Card>
   );
