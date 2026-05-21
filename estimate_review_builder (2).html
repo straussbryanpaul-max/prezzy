@@ -1,0 +1,1913 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Estimate Basis & Review Book Builder</title>
+<style>
+:root {
+  --navy: #1E2D38;
+  --blue: #0078D4;
+  --teal: #00A3A1;
+  --dark: #111d24;
+  --light: #F4F6F9;
+  --white: #FFFFFF;
+  --gray: #E2E8F0;
+  --gray2: #94A3B8;
+  --gray3: #64748B;
+  --red: #E8290B;
+  --green: #10B981;
+  --orange: #F59E0B;
+  --shadow: 0 2px 12px rgba(0,0,0,0.10);
+  --shadow2: 0 4px 24px rgba(0,0,0,0.15);
+  --radius: 12px;
+  --transition: all 0.25s cubic-bezier(.4,0,.2,1);
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family: 'Segoe UI',system-ui,-apple-system,sans-serif; background:var(--light); color:#1e293b; line-height:1.6; }
+/* TOP BAR */
+.topbar { position:fixed; top:0; left:0; right:0; height:60px; background:linear-gradient(135deg,#1E2D38,#0d1b24); display:flex; align-items:center; padding:0 24px; z-index:1000; box-shadow:0 2px 20px rgba(0,0,0,.2); border-bottom:3px solid var(--red); }
+.topbar .logo { color:var(--white); font-size:18px; font-weight:700; letter-spacing:-.3px; display:flex; align-items:center; gap:10px; }
+.topbar .logo span { background:var(--teal); padding:2px 8px; border-radius:4px; font-size:11px; font-weight:600; letter-spacing:.5px; }
+.topbar .project-name { color:var(--gray); font-size:14px; margin-left:32px; flex:1; opacity:.8; }
+.topbar .controls { display:flex; align-items:center; gap:12px; }
+.topbar button, .topbar label { color:var(--white); background:rgba(255,255,255,.1); border:1px solid rgba(255,255,255,.15); padding:6px 14px; border-radius:8px; cursor:pointer; font-size:13px; transition:var(--transition); display:flex; align-items:center; gap:6px; }
+.topbar button:hover, .topbar label:hover { background:rgba(255,255,255,.2); }
+.topbar .redact-toggle { background:var(--red); border-color:var(--red); }
+.topbar .redact-toggle.active { background:var(--green); border-color:var(--green); }
+/* SIDEBAR */
+.sidebar { position:fixed; top:60px; left:0; width:300px; bottom:0; background:var(--white); border-right:1px solid var(--gray); overflow-y:auto; z-index:900; transition:var(--transition); }
+.sidebar::-webkit-scrollbar { width:4px; }
+.sidebar::-webkit-scrollbar-thumb { background:var(--gray2); border-radius:4px; }
+.sidebar .section-group { border-bottom:1px solid var(--gray); }
+.sidebar .section-header { padding:12px 16px; font-size:13px; font-weight:700; color:var(--navy); cursor:pointer; display:flex; align-items:center; justify-content:space-between; transition:var(--transition); user-select:none; }
+.sidebar .section-header:hover { background:var(--light); }
+.sidebar .section-header .arrow { transition:transform .2s; font-size:10px; }
+.sidebar .section-header.collapsed .arrow { transform:rotate(-90deg); }
+.sidebar .section-items { padding:0; }
+.sidebar .section-header.collapsed + .section-items { display:none; }
+.sidebar .slide-item { padding:8px 16px 8px 32px; font-size:12px; color:var(--gray3); cursor:pointer; display:flex; align-items:center; gap:8px; transition:var(--transition); border-left:3px solid transparent; }
+.sidebar .slide-item:hover { background:var(--light); color:var(--navy); }
+.sidebar .slide-item.active { background:rgba(0,120,212,.06); color:var(--blue); border-left-color:var(--blue); font-weight:600; }
+.sidebar .slide-item .badge { font-size:10px; margin-left:auto; }
+.sidebar .slide-item.redacted-item { opacity:.5; }
+.sidebar .slide-item.redacted-item .badge { color:var(--red); }
+.sidebar .slide-item.hidden-redacted { display:none; }
+/* MAIN */
+.main { margin-left:300px; margin-top:60px; padding:32px; min-height:calc(100vh - 60px); }
+.slide-view { max-width:1000px; margin:0 auto; }
+.slide-card { background:var(--white); border-radius:var(--radius); box-shadow:var(--shadow); overflow:hidden; margin-bottom:24px; }
+.slide-card .card-header { background:linear-gradient(135deg,var(--navy),#0d1b24); padding:20px 28px; display:flex; align-items:center; justify-content:space-between; }
+.slide-card .card-header h2 { color:var(--white); font-size:18px; font-weight:700; }
+.slide-card .card-header .slide-num { color:var(--teal); font-size:12px; font-weight:600; letter-spacing:.5px; }
+.slide-card .card-body { padding:28px; }
+.slide-card .card-header .redact-check { display:flex; align-items:center; gap:6px; color:rgba(255,255,255,.7); font-size:12px; cursor:pointer; }
+.slide-card .card-header .redact-check input { accent-color:var(--red); }
+/* FORM ELEMENTS */
+.form-group { margin-bottom:20px; }
+.form-group label { display:block; font-size:13px; font-weight:600; color:var(--navy); margin-bottom:6px; }
+.form-group input, .form-group textarea, .form-group select { width:100%; padding:10px 14px; border:1px solid var(--gray); border-radius:8px; font-size:14px; font-family:inherit; transition:var(--transition); background:var(--white); }
+.form-group input:focus, .form-group textarea:focus, .form-group select:focus { outline:none; border-color:var(--blue); box-shadow:0 0 0 3px rgba(0,120,212,.1); }
+.form-group textarea { min-height:100px; resize:vertical; }
+.form-group select { cursor:pointer; appearance:auto; }
+.form-row { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+.form-row-3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:16px; }
+/* GUIDANCE PANEL */
+.guidance { background:linear-gradient(135deg,#F0F9FF,#E0F2FE); border:1px solid #BAE6FD; border-radius:8px; padding:14px 18px; margin-bottom:20px; cursor:pointer; }
+.guidance .guidance-header { display:flex; align-items:center; gap:8px; font-size:13px; font-weight:600; color:var(--blue); }
+.guidance .guidance-body { font-size:12px; color:#0369A1; margin-top:8px; line-height:1.7; display:none; }
+.guidance.open .guidance-body { display:block; }
+/* AI BRAIN DUMP */
+.brain-dump { background:linear-gradient(135deg,#FEFCE8,#FEF9C3); border:1px solid #FDE68A; border-radius:8px; padding:14px 18px; margin-bottom:20px; }
+.brain-dump .bd-header { display:flex; align-items:center; gap:8px; font-size:13px; font-weight:600; color:#92400E; cursor:pointer; }
+.brain-dump textarea { margin-top:10px; display:none; width:100%; min-height:80px; border:1px solid #FDE68A; border-radius:6px; padding:10px; font-size:13px; font-family:inherit; background:rgba(255,255,255,.7); }
+.brain-dump.open textarea { display:block; }
+.brain-dump .ai-btn { margin-top:8px; display:none; background:linear-gradient(135deg,var(--teal),#0078D4); color:white; border:none; padding:8px 16px; border-radius:6px; font-size:12px; font-weight:600; cursor:pointer; }
+.brain-dump.open .ai-btn { display:inline-block; }
+/* TABLE STYLES */
+.data-table { width:100%; border-collapse:collapse; font-size:13px; }
+.data-table th { background:var(--navy); color:white; padding:10px 14px; text-align:left; font-weight:600; font-size:12px; letter-spacing:.3px; }
+.data-table td { padding:8px 14px; border-bottom:1px solid var(--gray); }
+.data-table tr:hover td { background:var(--light); }
+.data-table input, .data-table select, .data-table textarea { border:1px solid transparent; background:transparent; padding:6px 8px; width:100%; font-size:13px; font-family:inherit; border-radius:4px; }
+.data-table input:focus, .data-table select:focus, .data-table textarea:focus { border-color:var(--blue); background:white; outline:none; }
+.data-table textarea { min-height:60px; resize:vertical; }
+.add-row-btn { margin-top:8px; background:var(--light); border:1px dashed var(--gray2); padding:8px 16px; border-radius:6px; cursor:pointer; font-size:12px; color:var(--gray3); display:flex; align-items:center; gap:6px; transition:var(--transition); }
+.add-row-btn:hover { border-color:var(--blue); color:var(--blue); background:#F0F9FF; }
+/* IMAGE UPLOAD */
+.img-upload { border:2px dashed var(--gray); border-radius:8px; padding:32px; text-align:center; cursor:pointer; transition:var(--transition); color:var(--gray3); }
+.img-upload:hover { border-color:var(--blue); background:#F0F9FF; color:var(--blue); }
+.img-upload input { display:none; }
+.img-upload .icon { font-size:32px; margin-bottom:8px; }
+.img-upload p { font-size:13px; }
+.img-upload img { max-width:100%; max-height:300px; border-radius:8px; margin-top:12px; }
+/* AI PANEL */
+.ai-panel { position:fixed; top:60px; right:-400px; width:400px; bottom:0; background:var(--white); box-shadow:-4px 0 24px rgba(0,0,0,.1); z-index:950; transition:var(--transition); padding:28px; overflow-y:auto; }
+.ai-panel.open { right:0; }
+.ai-panel h3 { color:var(--navy); font-size:16px; margin-bottom:20px; display:flex; align-items:center; gap:8px; }
+.ai-panel .close-ai { position:absolute; top:16px; right:16px; background:none; border:none; font-size:20px; cursor:pointer; color:var(--gray3); }
+/* REDACTED OVERLAY */
+.redacted-overlay { position:relative; }
+.redacted-overlay::after { content:'REDACTED'; position:absolute; top:0; left:0; right:0; bottom:0; background:repeating-linear-gradient(45deg,rgba(239,68,68,.05),rgba(239,68,68,.05) 10px,transparent 10px,transparent 20px); display:flex; align-items:center; justify-content:center; font-size:48px; font-weight:900; color:rgba(239,68,68,.1); letter-spacing:8px; pointer-events:none; z-index:1; border-radius:var(--radius); }
+/* SECTION DIVIDER */
+.section-divider { background:linear-gradient(135deg,#1E2D38,#0d1b24); padding:32px 28px; border-radius:var(--radius); margin-bottom:24px; text-align:center; }
+.section-divider h1 { color:var(--white); font-size:24px; font-weight:800; }
+.section-divider .sub { color:var(--teal); font-size:14px; margin-top:4px; }
+/* DISCIPLINES */
+.discipline-tabs { display:flex; gap:4px; flex-wrap:wrap; margin-bottom:20px; }
+.discipline-tabs button { padding:8px 16px; border:1px solid var(--gray); background:white; border-radius:8px; font-size:12px; cursor:pointer; transition:var(--transition); font-weight:500; }
+.discipline-tabs button.active { background:var(--navy); color:white; border-color:var(--navy); }
+.discipline-tabs button:hover:not(.active) { background:var(--light); }
+/* PRINT */
+@media print {
+  .sidebar, .topbar, .ai-panel, .guidance, .brain-dump, .add-row-btn, .ai-btn { display:none !important; }
+  .main { margin:0; padding:16px; }
+  .slide-card { break-inside:avoid; box-shadow:none; border:1px solid #ddd; }
+  .redacted-overlay::after { display:none; }
+}
+/* ANIMATIONS */
+@keyframes fadeIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+.slide-view { animation:fadeIn .3s ease; }
+/* RESPONSIVE */
+@media (max-width: 768px) {
+  .sidebar { width:240px; transform:translateX(-100%); }
+  .sidebar.open { transform:translateX(0); }
+  .main { margin-left:0; }
+  .form-row, .form-row-3 { grid-template-columns:1fr; }
+}
+.toggle-switch { position:relative; width:44px; height:24px; display:inline-block; }
+.toggle-switch input { opacity:0; width:0; height:0; }
+.toggle-switch .slider { position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; background:#ccc; border-radius:24px; transition:.3s; }
+.toggle-switch .slider:before { content:''; position:absolute; height:18px; width:18px; left:3px; bottom:3px; background:white; border-radius:50%; transition:.3s; }
+.toggle-switch input:checked + .slider { background:var(--green); }
+.toggle-switch input:checked + .slider:before { transform:translateX(20px); }
+.chip { display:inline-block; padding:2px 8px; border-radius:4px; font-size:10px; font-weight:700; letter-spacing:.3px; }
+.chip-preread { background:#DBEAFE; color:#1E40AF; }
+.chip-removed { background:#FEE2E2; color:#991B1B; }
+.chip-redacted { background:#FEF3C7; color:#92400E; }
+
+/* ── RED ACCENT FIXES ── */
+.sidebar .slide-item.active { background:rgba(232,41,11,.07); color:var(--red); border-left-color:var(--red); font-weight:600; }
+.topbar .logo span { background:var(--red); }
+.topbar .redact-toggle { background:var(--red); border-color:var(--red); }
+.topbar .redact-toggle.active { background:var(--green); border-color:var(--green); }
+.data-table th { background:var(--navy); }
+.chip-preread { background:#DBEAFE; color:#1E40AF; }
+.chip-redacted2 { background:#FEE2E2; color:#991B1B; }
+
+
+
+/* ── STATUS BAR ── */
+.statusbar { position:fixed; bottom:0; left:0; right:0; height:22px; background:#0a1318; display:flex; align-items:center; padding:0 16px; gap:14px; font-size:10px; color:rgba(255,255,255,.3); z-index:900; }
+.sdot { width:6px; height:6px; border-radius:50%; background:var(--green); }
+
+/* ── ADJUST MAIN FOR NOTES + STATUS ── */
+.main { margin-left:290px; margin-top:63px; padding:28px; min-height:calc(100vh - 63px); padding-bottom:50px; }
+
+/* ── POWERBI EMBED ── */
+.pbi-wrap { background:var(--light); border:1px solid var(--gray); border-radius:8px; padding:14px; margin-bottom:16px; }
+.pbi-wrap label { font-size:12px; font-weight:600; color:var(--navy); display:block; margin-bottom:8px; }
+.pbi-row { display:flex; gap:8px; margin-bottom:10px; }
+.pbi-row input { flex:1; padding:8px 11px; border:1px solid var(--gray); border-radius:7px; font-size:12px; font-family:inherit; }
+.pbi-row button { padding:8px 13px; background:var(--navy); color:#fff; border:none; border-radius:7px; cursor:pointer; font-size:12px; font-family:inherit; }
+.pbi-frame { background:#1B2A35; border-radius:7px; min-height:150px; display:flex; align-items:center; justify-content:center; }
+.pbi-ph { font-size:12px; color:rgba(255,255,255,.3); text-align:center; padding:20px; }
+.pbi-frame iframe { width:100%; height:220px; border:none; display:block; }
+
+/* ── API KEY INPUT ── */
+.api-wrap { display:flex; align-items:center; gap:7px; margin-left:10px; }
+.api-dot { width:7px; height:7px; border-radius:50%; background:rgba(255,255,255,.25); flex-shrink:0; }
+.api-dot.on { background:var(--green); }
+.api-key-input { background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.15); color:#fff; font-family:inherit; font-size:11px; padding:5px 9px; border-radius:6px; width:160px; }
+.api-key-input:focus { outline:none; border-color:var(--teal); }
+.api-key-input::placeholder { color:rgba(255,255,255,.3); }
+
+/* ── FILE MODAL ── */
+.modal-bg { display:none; position:fixed; inset:0; background:rgba(0,0,0,.55); z-index:2000; align-items:center; justify-content:center; }
+.modal-bg.open { display:flex; }
+.modal { background:#fff; border-radius:12px; width:520px; max-width:93vw; max-height:82vh; overflow:hidden; display:flex; flex-direction:column; box-shadow:var(--shadow2); }
+.modal-hdr { padding:16px 20px; border-bottom:1px solid var(--gray); display:flex; align-items:center; justify-content:space-between; }
+.modal-hdr h3 { font-size:15px; font-weight:700; color:var(--navy); }
+.modal-x { font-size:18px; background:none; border:none; cursor:pointer; color:var(--gray2); }
+.modal-body { padding:20px; overflow-y:auto; flex:1; display:flex; flex-direction:column; gap:14px; }
+.modal-foot { padding:13px 20px; border-top:1px solid var(--gray); display:flex; justify-content:flex-end; gap:8px; }
+.drop-zone { border:2px dashed var(--gray); border-radius:8px; padding:28px; text-align:center; cursor:pointer; transition:var(--transition); }
+.drop-zone:hover, .drop-zone.over { border-color:var(--blue); background:#EFF6FF; }
+.drop-zone .dico { font-size:30px; margin-bottom:8px; }
+.drop-zone p { font-size:13px; color:var(--gray3); }
+.drop-zone span { color:var(--blue); font-weight:600; }
+.file-list { display:flex; flex-direction:column; gap:5px; }
+.file-item { background:var(--light); border:1px solid var(--gray); border-radius:6px; padding:8px 12px; display:flex; align-items:center; gap:10px; font-size:12px; }
+.fi-name { flex:1; color:var(--gray3); }
+.fi-sz { font-size:10px; color:var(--gray2); }
+.fi-ok { font-size:11px; font-weight:700; color:var(--green); }
+.btn-run { background:linear-gradient(135deg,var(--navy),var(--blue)); color:#fff; border:none; padding:9px 18px; border-radius:7px; font-size:13px; font-weight:700; cursor:pointer; font-family:inherit; display:flex; align-items:center; gap:6px; }
+.btn-cancel { padding:9px 16px; border:1px solid var(--gray); border-radius:7px; background:#fff; cursor:pointer; font-size:13px; font-family:inherit; }
+.spin { width:12px; height:12px; border:2px solid rgba(255,255,255,.3); border-top-color:#fff; border-radius:50%; animation:spin .6s linear infinite; display:none; }
+.spin.on { display:inline-block; }
+@keyframes spin { to { transform:rotate(360deg); } }
+
+/* ── AI RESULT ── */
+.ai-result-box { display:none; background:#F0FDF4; border:1px solid #86EFAC; border-radius:7px; padding:12px 14px; margin-top:10px; }
+.ai-result-box.show { display:block; }
+.air-hdr { font-size:11px; font-weight:700; color:#166534; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center; }
+.air-text { font-size:13px; color:#14532D; line-height:1.6; white-space:pre-wrap; }
+.air-actions { display:flex; gap:6px; }
+.air-use { background:var(--green); color:#fff; border:none; padding:4px 10px; border-radius:5px; cursor:pointer; font-size:11px; font-weight:700; font-family:inherit; }
+.air-disc { background:#fff; color:var(--gray3); border:1px solid var(--gray); padding:4px 10px; border-radius:5px; cursor:pointer; font-size:11px; font-family:inherit; }
+
+/* ── ESTIMATOR NOTES DRAWER ── */
+.notes-drawer { position:fixed; top:63px; right:0; width:480px; height:calc(100vh - 85px); background:var(--navy); border-left:3px solid var(--orange); box-shadow:-4px 0 24px rgba(0,0,0,.25); z-index:1500; display:flex; flex-direction:column; transform:translateX(100%); transition:transform .3s cubic-bezier(.4,0,.2,1); }
+.notes-drawer.open { transform:translateX(0); }
+.nd-hdr { padding:14px 18px; border-bottom:1px solid rgba(255,255,255,.1); display:flex; align-items:center; gap:10px; }
+.nd-hdr-title { font-size:13px; font-weight:800; letter-spacing:1px; color:var(--orange); text-transform:uppercase; flex:1; }
+.nd-close { background:none; border:none; color:rgba(255,255,255,.4); font-size:18px; cursor:pointer; line-height:1; padding:2px 6px; }
+.nd-close:hover { color:#fff; }
+.nd-body { display:flex; flex:1; overflow:hidden; }
+.nd-ta { flex:1; background:transparent; border:none; resize:none; color:rgba(255,255,255,.85); font-family:inherit; font-size:13px; padding:14px 16px; line-height:1.7; }
+.nd-ta:focus { outline:none; }
+.nd-ta::placeholder { color:rgba(255,255,255,.22); font-style:italic; }
+.nd-side { width:175px; border-left:1px solid rgba(255,255,255,.08); padding:12px 10px; display:flex; flex-direction:column; gap:5px; background:rgba(0,0,0,.15); }
+.nd-side-lbl { font-size:9px; font-weight:800; letter-spacing:1px; color:var(--orange); text-transform:uppercase; margin-bottom:4px; }
+.nd-btn { font-size:11px; padding:7px 9px; background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.1); border-radius:6px; cursor:pointer; color:rgba(255,255,255,.65); font-family:inherit; text-align:left; transition:var(--transition); }
+.nd-btn:hover { background:rgba(255,255,255,.12); color:#fff; }
+.nd-btn.all { border-color:rgba(245,158,11,.5); color:var(--orange); font-weight:700; }
+.nd-footer { padding:10px 16px; border-top:1px solid rgba(255,255,255,.08); }
+.nd-apply-all { width:100%; padding:9px; background:linear-gradient(135deg,#b85e00,var(--orange)); color:#fff; border:none; border-radius:7px; font-size:12px; font-weight:700; cursor:pointer; font-family:inherit; display:flex; align-items:center; justify-content:center; gap:6px; }
+.nd-apply-all:hover { filter:brightness(1.1); }
+/* topbar notes button highlight */
+.notes-drawer-btn.active { background:rgba(245,158,11,.25) !important; border-color:var(--orange) !important; color:var(--orange) !important; }
+
+/* ══════════════════════════════════════
+   MODULAR BLOCK SYSTEM
+══════════════════════════════════════ */
+
+/* Floating toolbar */
+.block-toolbar { position:fixed; bottom:36px; left:50%; transform:translateX(-50%); background:var(--navy); border:1px solid rgba(255,255,255,.15); border-radius:50px; padding:8px 16px; display:flex; align-items:center; gap:6px; box-shadow:0 4px 24px rgba(0,0,0,.35); z-index:1200; }
+.block-toolbar-label { font-size:10px; font-weight:700; letter-spacing:1px; color:rgba(255,255,255,.4); text-transform:uppercase; margin-right:4px; white-space:nowrap; }
+.tb-add-btn { background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.12); color:rgba(255,255,255,.8); padding:6px 12px; border-radius:20px; cursor:pointer; font-size:12px; font-family:inherit; font-weight:500; display:flex; align-items:center; gap:5px; transition:var(--transition); white-space:nowrap; }
+.tb-add-btn:hover { background:rgba(255,255,255,.18); color:#fff; border-color:rgba(255,255,255,.3); }
+.tb-add-btn.active { background:var(--red); border-color:var(--red); color:#fff; }
+.tb-divider { width:1px; height:20px; background:rgba(255,255,255,.15); margin:0 2px; }
+
+/* Block wrapper */
+.mod-block { position:relative; margin-bottom:16px; border:2px solid transparent; border-radius:10px; transition:border-color .15s; }
+.mod-block:hover { border-color:rgba(0,120,212,.25); }
+.mod-block.selected { border-color:var(--blue) !important; }
+
+/* Block controls overlay */
+.block-controls { display:none; position:absolute; top:-14px; right:8px; background:var(--navy); border:1px solid rgba(255,255,255,.15); border-radius:20px; padding:3px 8px; gap:4px; align-items:center; z-index:10; box-shadow:0 2px 8px rgba(0,0,0,.3); }
+.mod-block:hover .block-controls,
+.mod-block.selected .block-controls { display:flex; }
+.bc-btn { background:none; border:none; color:rgba(255,255,255,.6); cursor:pointer; font-size:12px; padding:2px 5px; border-radius:4px; transition:var(--transition); line-height:1; }
+.bc-btn:hover { background:rgba(255,255,255,.1); color:#fff; }
+.bc-btn.del:hover { background:rgba(220,0,0,.4); color:#fff; }
+.bc-btn.drag-handle { cursor:grab; }
+.bc-btn.drag-handle:active { cursor:grabbing; }
+
+/* Resize handle */
+.resize-handle { position:absolute; bottom:0; right:0; width:16px; height:16px; cursor:se-resize; opacity:0; transition:opacity .15s; }
+.resize-handle::after { content:''; position:absolute; bottom:3px; right:3px; width:8px; height:8px; border-right:2px solid var(--blue); border-bottom:2px solid var(--blue); border-radius:1px; }
+.mod-block:hover .resize-handle,
+.mod-block.selected .resize-handle { opacity:1; }
+
+/* Size buttons */
+.size-btns { display:flex; gap:3px; align-items:center; }
+.size-btn { background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.15); color:rgba(255,255,255,.7); padding:1px 6px; border-radius:3px; cursor:pointer; font-size:10px; font-family:inherit; }
+.size-btn:hover { background:rgba(255,255,255,.2); color:#fff; }
+
+/* ── TABLE BLOCK ── */
+.mod-table-wrap { overflow-x:auto; }
+.mod-table { width:100%; border-collapse:collapse; font-size:13px; }
+.mod-table th { background:var(--navy); color:#fff; padding:9px 12px; text-align:left; font-size:11px; font-weight:700; letter-spacing:.3px; min-width:80px; }
+.mod-table th[contenteditable]:focus { outline:2px solid var(--teal); outline-offset:-2px; background:#264560; }
+.mod-table td { padding:6px 10px; border-bottom:1px solid var(--gray); vertical-align:top; }
+.mod-table tr:hover td { background:#f8fafc; }
+.mod-table td input, .mod-table td select, .mod-table td textarea { border:1px solid transparent; background:transparent; padding:4px 6px; width:100%; font-size:13px; font-family:inherit; border-radius:4px; resize:none; }
+.mod-table td input:focus, .mod-table td select:focus, .mod-table td textarea:focus { border-color:var(--blue); background:#fff; outline:none; }
+.tbl-footer { display:flex; gap:8px; padding:8px 0 0; }
+.tbl-btn { background:var(--light); border:1px dashed var(--gray2); padding:5px 12px; border-radius:6px; cursor:pointer; font-size:11px; color:var(--gray3); font-family:inherit; transition:var(--transition); }
+.tbl-btn:hover { border-color:var(--blue); color:var(--blue); background:#EFF6FF; }
+
+/* ── IMAGE BLOCK ── */
+.mod-img-wrap { min-height:120px; border:2px dashed var(--gray); border-radius:8px; display:flex; align-items:center; justify-content:center; cursor:pointer; transition:var(--transition); overflow:hidden; position:relative; background:#fafbfc; }
+.mod-img-wrap:hover { border-color:var(--blue); background:#EFF6FF; }
+.mod-img-wrap.has-image { border-style:solid; border-color:var(--gray); }
+.mod-img-wrap img { width:100%; height:100%; object-fit:contain; display:block; }
+.img-placeholder { display:flex; flex-direction:column; align-items:center; gap:8px; color:var(--gray2); pointer-events:none; }
+.img-placeholder .ico { font-size:32px; }
+.img-placeholder p { font-size:12px; }
+
+/* ── FILE UPLOAD BLOCK ── */
+.mod-file-wrap { background:var(--light); border:1px solid var(--gray); border-radius:8px; padding:14px; }
+.mod-file-drop { border:2px dashed var(--gray); border-radius:7px; padding:20px; text-align:center; cursor:pointer; transition:var(--transition); color:var(--gray3); font-size:13px; }
+.mod-file-drop:hover, .mod-file-drop.over { border-color:var(--blue); background:#EFF6FF; color:var(--blue); }
+.mod-file-drop .dico { font-size:26px; margin-bottom:6px; }
+.mod-file-list { margin-top:10px; display:flex; flex-direction:column; gap:5px; }
+.mod-file-item { background:#fff; border:1px solid var(--gray); border-radius:6px; padding:7px 12px; display:flex; align-items:center; gap:10px; font-size:12px; }
+.mod-file-item .fn { flex:1; color:var(--gray3); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.mod-file-item .fs { font-size:10px; color:var(--gray2); }
+.mod-file-item .fx { background:none; border:none; color:var(--gray2); cursor:pointer; font-size:14px; margin-left:4px; }
+.mod-file-item .fx:hover { color:var(--red); }
+
+/* ── POWER BI BLOCK ── */
+.mod-pbi-wrap { background:var(--light); border:1px solid var(--gray); border-radius:8px; padding:14px; }
+.pbi-input-row { display:flex; gap:8px; margin-bottom:10px; }
+.pbi-input-row input { flex:1; padding:8px 11px; border:1px solid var(--gray); border-radius:7px; font-size:12px; font-family:inherit; }
+.pbi-input-row input:focus { outline:none; border-color:var(--blue); }
+.pbi-input-row button { padding:8px 14px; background:var(--navy); color:#fff; border:none; border-radius:7px; cursor:pointer; font-size:12px; font-family:inherit; white-space:nowrap; }
+.pbi-embed-frame { background:#1B2A35; border-radius:7px; overflow:hidden; display:flex; align-items:center; justify-content:center; }
+.pbi-embed-ph { font-size:12px; color:rgba(255,255,255,.3); text-align:center; padding:28px; }
+.pbi-embed-frame iframe { width:100%; border:none; display:block; }
+
+/* ── SHAPES / ART BLOCK ── */
+.mod-shape-wrap { display:flex; align-items:center; justify-content:center; padding:16px; min-height:100px; }
+.shape-picker { background:#fff; border:1px solid var(--gray); border-radius:10px; padding:14px; }
+.shape-picker-label { font-size:11px; font-weight:700; color:var(--navy); margin-bottom:10px; letter-spacing:.3px; }
+.shape-grid { display:grid; grid-template-columns:repeat(6,1fr); gap:8px; }
+.shape-opt { aspect-ratio:1; display:flex; align-items:center; justify-content:center; border:1px solid var(--gray); border-radius:7px; cursor:pointer; font-size:22px; transition:var(--transition); background:#fafbfc; }
+.shape-opt:hover { border-color:var(--blue); background:#EFF6FF; transform:scale(1.08); }
+.shape-opt.selected { border-color:var(--red); background:#FEF2F2; }
+.shape-canvas-wrap { display:flex; align-items:center; justify-content:center; }
+.shape-color-row { display:flex; gap:6px; margin-top:10px; align-items:center; }
+.shape-color { width:22px; height:22px; border-radius:50%; cursor:pointer; border:2px solid transparent; transition:var(--transition); }
+.shape-color:hover, .shape-color.active { border-color:var(--navy); transform:scale(1.15); }
+
+/* ── DRAG DROP REORDER ── */
+.mod-block.dragging { opacity:.4; transform:scale(.98); }
+.mod-block.drag-over-top { border-top:3px solid var(--blue) !important; }
+.mod-block.drag-over-bottom { border-bottom:3px solid var(--blue) !important; }
+
+/* ── TEXT BLOCK ── */
+.mod-text-wrap { background:#fff; border:1px solid var(--gray); border-radius:8px; overflow:hidden; }
+.mod-text-wrap textarea { width:100%; padding:12px 14px; border:none; font-family:inherit; font-size:13px; line-height:1.65; resize:vertical; min-height:80px; color:#1e293b; }
+.mod-text-wrap textarea:focus { outline:none; background:#FAFFFE; }
+
+/* Picker popup */
+.shape-popup { display:none; position:fixed; background:#fff; border:1px solid var(--gray); border-radius:12px; padding:16px; box-shadow:var(--shadow2); z-index:2000; width:320px; }
+.shape-popup.open { display:block; }
+.sp-title { font-size:13px; font-weight:700; color:var(--navy); margin-bottom:12px; }
+.sp-section { font-size:10px; font-weight:700; letter-spacing:.8px; color:var(--gray2); text-transform:uppercase; margin:10px 0 6px; }
+.sp-close { float:right; background:none; border:none; font-size:16px; cursor:pointer; color:var(--gray2); }
+
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <div class="logo">📊 Estimate Basis Builder <span>M&T</span></div>
+  <div class="project-name" id="topProjectName">No Project Selected</div>
+  <div class="controls">
+    <button onclick="toggleAI()">🤖 AI Assistant</button>
+    <button class="notes-drawer-btn" onclick="toggleNotes()">⚡ Estimator Notes</button>
+    <button class="redact-toggle" id="redactToggle" onclick="toggleRedaction()">🔒 Show Redacted</button>
+    <button onclick="window.print()">📄 Print PDF</button>
+    <button onclick="alert('PPTX export requires pptxgenjs integration. Save your work and use the export API.')">📊 Export PPTX</button>
+  </div>
+</div>
+
+<!-- SIDEBAR -->
+<div class="sidebar" id="sidebar"></div>
+
+<!-- AI PANEL -->
+<div class="ai-panel" id="aiPanel">
+  <button class="close-ai" onclick="toggleAI()">✕</button>
+  <h3>🤖 AI Assistant</h3>
+  <div class="form-group">
+    <label>API Token</label>
+    <input type="password" placeholder="Enter your OpenAI/Azure API key" id="apiToken">
+  </div>
+  <div class="form-group">
+    <label>Upload Documents</label>
+    <div class="img-upload" style="padding:20px">
+      <div class="icon">📎</div>
+      <p>Drop SOWs, estimate docs, specs here</p>
+      <input type="file" multiple>
+    </div>
+  </div>
+  <div class="form-group">
+    <label>Global Brain Dump</label>
+    <textarea rows="6" placeholder="Paste everything you know about this estimate — project background, scope notes, key decisions, rough numbers, anything. AI will parse and distribute across relevant slides..."></textarea>
+  </div>
+  <button style="width:100%;padding:12px;background:linear-gradient(135deg,var(--teal),var(--blue));color:white;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;">⚡ Auto-Fill from Documents & Notes</button>
+  <p style="font-size:11px;color:var(--gray3);margin-top:12px;text-align:center;">AI will scrape uploaded documents and your brain dump to intelligently populate slide fields.</p>
+</div>
+
+<!-- MAIN CONTENT -->
+<div class="main">
+
+<!-- MODULAR BLOCK TOOLBAR -->
+<div class="block-toolbar" id="blockToolbar" style="display:none;">
+  <span class="block-toolbar-label">Add Block</span>
+  <button class="tb-add-btn" onclick="addBlock('text')">📝 Text</button>
+  <button class="tb-add-btn" onclick="addBlock('table')">📊 Table</button>
+  <button class="tb-add-btn" onclick="addBlock('image')">🖼️ Image</button>
+  <button class="tb-add-btn" onclick="addBlock('file')">📎 File Upload</button>
+  <button class="tb-add-btn" onclick="addBlock('pbi')">⚡ Power BI</button>
+  <button class="tb-add-btn" onclick="addBlock('shape')">🎨 Shape / Art</button>
+  <div class="tb-divider"></div>
+  <button class="tb-add-btn" style="color:rgba(255,255,255,.4);font-size:11px;" onclick="document.getElementById('blockToolbar').style.display='none'">✕ Close</button>
+</div>
+
+<!-- SHAPE PICKER POPUP -->
+<div class="shape-popup" id="shapePicker">
+  <button class="sp-close" onclick="document.getElementById('shapePicker').style.display='none'">✕</button>
+  <div class="sp-title">🎨 Choose a Shape or Icon</div>
+  <div class="sp-section">Callouts & Banners</div>
+  <div class="shape-grid" id="shapeGridCallouts"></div>
+  <div class="sp-section">Process & Flow</div>
+  <div class="shape-grid" id="shapeGridFlow"></div>
+  <div class="sp-section">Status & Indicators</div>
+  <div class="shape-grid" id="shapeGridStatus"></div>
+  <div class="sp-section">Fill Color</div>
+  <div class="shape-color-row" id="shapeColors"></div>
+</div>
+
+  <div class="slide-view" id="slideView"></div>
+</div>
+
+<script>
+// ============ DATA MODEL ============
+const DISCIPLINES = [
+  { id:'civil', name:'Civil', code:'03.020' },
+  { id:'concrete', name:'Concrete', code:'03.040' },
+  { id:'steel', name:'Steel', code:'03.050' },
+  { id:'architectural', name:'Architectural', code:'03.060' },
+  { id:'mechanical', name:'Process/Mechanical', code:'03.070' },
+  { id:'piping', name:'Piping', code:'03.080' },
+  { id:'electrical', name:'Electrical', code:'03.090' },
+  { id:'instrumentation', name:'Instrumentation/LSS', code:'03.100' }
+];
+
+const ESTIMATE_CLASSES = ['Class 1 - Definitive','Class 2 - Engineer\'s','Class 3 - Preliminary','Class 4 - Feasibility','Class 5 - Conceptual'];
+const CONTRACT_TYPES = ['LSTK','EPC','EPCM','Cost Reimbursable','GMP','T&M'];
+const CONSTRUCTION_ENTITIES = ['BCC','Becon','BCOI','Subcontract','Direct Hire'];
+const LABOR_TYPES = ['Union','Open Shop','Merit Shop','Mixed'];
+const WORK_WEEKS = ['5-8s (40hr)','4-10s (40hr)','5-10s (50hr)','6-10s (60hr)','5-8s + Sat OT','6-10s + Sun OT'];
+const MTO_METHODS = ['Material Take-off (Engineered)','Factored by Estimating','Allowance','Vendor Supplied','Historical Reference','Subcontractor Provided'];
+const PRICING_LEVELS = ['Level 1 - Firm','Level 2 - Budget','Level 3 - Informal','Level 4 - In-house','+/-0%','Historical'];
+const REVIEW_TYPES = ['Estimating Manager\'s Review','Project Management Team Review','Functional Management Review','GBU Senior Management Review','GBU President\'s Review','Scope & Quantity Review'];
+const BECHTEL_ENTITIES = ['Bechtel Construction Company (BCC)','Bechtel Equipment Operations (Becon)','Bechtel Corporation','Bechtel Global Corporation','Bechtel India','Bechtel Oil, Gas & Chemicals'];
+const PERFORMING_OFFICES = ['Houston','Reston','London','New Delhi','Brisbane','Frederick','Knoxville','San Francisco'];
+
+let showRedacted = false;
+let activeSlideId = 'cover';
+
+// ============ SLIDE DEFINITIONS ============
+const sections = [
+  { id:'s_cover', title:'Cover Page', slides:[
+    { id:'cover', title:'Estimate Basis & Presentation', num:'Title' }
+  ]},
+  { id:'s_agenda', title:'Review Agenda', slides:[
+    { id:'agenda', title:'Review Agenda', num:'Agenda' }
+  ]},
+  { id:'s_toc', title:'Table of Contents', slides:[
+    { id:'toc', title:'Table of Contents', num:'TOC' }
+  ]},
+  { id:'s_safety', title:'Safety Moment', slides:[
+    { id:'safety', title:'Safety Moment', num:'Safety' }
+  ]},
+  { id:'s_overview', title:'00.000 Project & Estimate Overview', slides:[
+    { id:'proj_data', title:'Project Data', num:'00.001' },
+    { id:'est_basis', title:'Summary Estimate Basis & Open Items', num:'00.002', preread:true },
+    { id:'site_plan', title:'Site Plan', num:'00.003' },
+    { id:'est_class', title:'Estimate Classification', num:'00.004', preread:true },
+    { id:'risks_opps', title:'Key Risks and Opportunities', num:'00.005', preread:true },
+    { id:'capacity', title:'Cost per Capacity Metrics', num:'00.006', preread:true }
+  ]},
+  { id:'s_commercial', title:'00.020 Commercial Summary', slides:[
+    { id:'hl_summary', title:'High-Level Estimate Summary', num:'00.021', preread:true },
+    { id:'sensitivity', title:'Sensitivity Analysis', num:'00.022' },
+    { id:'exec_cost', title:'Executive Cost Summary', num:'00.023' },
+    { id:'comparisons', title:'Project Summary Comparisons', num:'00.024' },
+    { id:'waterfall', title:'Waterfall Comparison', num:'00.025', preread:true },
+    { id:'currency', title:'Currency Narrative & Exchange Table', num:'00.026', preread:true }
+  ]},
+  { id:'s_engineering', title:'01.000 Engineering Basis', slides:[
+    { id:'design_basis', title:'Summary Basis of Design', num:'01.001', preread:true }
+  ]},
+  { id:'s_execution', title:'02.000 Project Execution', slides:[
+    { id:'exec_plan', title:'Execution Plan Summary', num:'02.001', preread:true },
+    { id:'sched_basis', title:'Schedule Basis & Assumptions', num:'02.021', preread:true },
+    { id:'sched_l1', title:'Schedule – Level 1', num:'02.022' },
+    { id:'crit_path', title:'Critical Paths', num:'02.023' },
+    { id:'headcount', title:'Craft Head Count', num:'02.025' },
+    { id:'sched_metrics', title:'Schedule Metrics', num:'02.026' }
+  ]},
+  { id:'s_estimate_basis', title:'03.000 Estimate Basis', slides:[
+    { id:'est_general', title:'General Quantification & Pricing', num:'03.010', preread:true },
+    { id:'est_scas', title:'SCAS & Contracting Plan', num:'03.017', preread:true },
+    { id:'est_wbs', title:'Work Breakdown Structure', num:'03.018', preread:true },
+    { id:'disciplines', title:'Discipline Estimate Basis', num:'03.020–100' },
+    { id:'disc_civil', title:'Civil Estimate Basis', num:'03.020' },
+    { id:'disc_concrete', title:'Concrete Estimate Basis', num:'03.040' },
+    { id:'disc_steel', title:'Steel Estimate Basis', num:'03.050' },
+    { id:'disc_architectural', title:'Architectural Estimate Basis', num:'03.060' },
+    { id:'disc_mechanical', title:'Process/Mechanical Estimate Basis', num:'03.070' },
+    { id:'disc_piping', title:'Piping Estimate Basis', num:'03.080' },
+    { id:'disc_electrical', title:'Electrical Estimate Basis', num:'03.090' },
+    { id:'disc_instrumentation', title:'Instrumentation/LSS Estimate Basis', num:'03.100' }
+  ]},
+  { id:'s_construction', title:'05.000 Construction & Indirects', slides:[
+    { id:'unit_rates', title:'Unit Rate Basis', num:'05.011', preread:true },
+    { id:'labor_strategy', title:'Craft Labor Strategy', num:'05.012', preread:true },
+    { id:'wage_rates', title:'Craft Wage Rates Table', num:'05.013' },
+    { id:'indirects', title:'Indirects Basis of Estimate', num:'05.021', preread:true },
+    { id:'prof_svcs', title:'Professional Services', num:'05.022' },
+    { id:'staffing', title:'Staffing Curves', num:'05.046' }
+  ]},
+  { id:'s_other_costs', title:'06.000 Escalation, Contingency, Risk & Fee', slides:[
+    { id:'escalation', title:'Escalation', num:'06.001' },
+    { id:'contingency', title:'Contingency', num:'06.002' },
+    { id:'risk_assess', title:'Risk Assessment', num:'06.003' },
+    { id:'fee', title:'Fee', num:'06.004', redacted:true },
+    { id:'benchmarks', title:'Historical Benchmarks', num:'06.005', redacted:true },
+    { id:'other_metrics', title:'Other Costs Metrics', num:'06.006' },
+    { id:'decline_perf', title:'Declining Performance Checklist', num:'06.008', preread:true }
+  ]},
+  { id:'s_aqe', title:'07.000 Assumptions, Qualifications & Exclusions', slides:[
+    { id:'aqe', title:'Assumptions, Qualifications & Exclusions', num:'07.001', preread:true },
+    { id:'trends', title:'Trends & Late Changes', num:'07.002' }
+  ]},
+  { id:'s_appendix', title:'08.000 Appendices', slides:[
+    { id:'appendix', title:'Appendices', num:'08.000' }
+  ]}
+];
+
+// ============ BUILD SIDEBAR ============
+function buildSidebar() {
+  const sb = document.getElementById('sidebar');
+  let html = '';
+  sections.forEach(sec => {
+    html += '<div class="section-group">';
+    html += '<div class="section-header" onclick="this.classList.toggle(\'collapsed\')">' + sec.title + '<span class="arrow">▼</span></div>';
+    html += '<div class="section-items">';
+    sec.slides.forEach(sl => {
+      const isRedacted = sl.redacted || isSlideRedacted(sl.id);
+      const badge = sl.redacted ? '<span class="badge">🔒</span>' : (sl.preread ? '<span class="badge chip chip-preread">PRE-READ</span>' : '');
+      const cls = (sl.id === activeSlideId ? 'active ' : '') + (isRedacted ? 'redacted-item ' : '') + (!showRedacted && isRedacted ? 'hidden-redacted' : '');
+      html += '<div class="slide-item ' + cls + '" data-id="' + sl.id + '" onclick="navigateTo(\'' + sl.id + '\')">';
+      html += '<span>' + sl.num + '</span> ' + sl.title + badge;
+      html += '</div>';
+    });
+    html += '</div></div>';
+  });
+  sb.innerHTML = html;
+}
+
+function isSlideRedacted(id) {
+  return localStorage.getItem('redact_' + id) === 'true';
+}
+
+function navigateTo(id) {
+  activeSlideId = id;
+  buildSidebar();
+  renderSlide(id);
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function toggleRedaction() {
+  showRedacted = !showRedacted;
+  const btn = document.getElementById('redactToggle');
+  btn.classList.toggle('active', showRedacted);
+  btn.innerHTML = showRedacted ? '🔓 Showing All' : '🔒 Show Redacted';
+  buildSidebar();
+  renderSlide(activeSlideId);
+}
+
+function toggleAI() {
+  document.getElementById('aiPanel').classList.toggle('open');
+}
+
+// ============ RENDER HELPERS ============
+function makeGuidance(text) {
+  return '<div class="guidance" onclick="this.classList.toggle(\'open\')"><div class="guidance-header">💡 Template Guidance (click to expand)</div><div class="guidance-body">' + text + '</div></div>';
+}
+
+function makeBrainDump(slideId) {
+  const val = localStorage.getItem('bd_' + slideId) || '';
+  return '<div class="brain-dump" onclick="if(event.target.tagName!==\'TEXTAREA\'&&event.target.tagName!==\'BUTTON\')this.classList.toggle(\'open\')">' +
+    '<div class="bd-header">🧠 AI Brain Dump (click to expand)</div>' +
+    '<textarea placeholder="Paste your rough notes here... AI will convert to formal narrative." oninput="localStorage.setItem(\'bd_' + slideId + '\',this.value)">' + val + '</textarea>' +
+    '<button class="ai-btn" onclick="alert(\'AI integration placeholder: Connect your API key in the AI Assistant panel to enable auto-formatting.\')">⚡ Convert to Formal Narrative</button>' +
+    '</div>';
+}
+
+function makeRedactCheck(slideId) {
+  const checked = isSlideRedacted(slideId) ? 'checked' : '';
+  return '<label class="redact-check"><input type="checkbox" ' + checked + ' onchange="localStorage.setItem(\'redact_' + slideId + '\',this.checked);buildSidebar()"> 🔒 Redacted</label>';
+}
+
+function makeImageUpload(id) {
+  const stored = localStorage.getItem('img_' + id);
+  const imgTag = stored ? '<img src="' + stored + '" />' : '';
+  return '<div class="img-upload" onclick="this.querySelector(\'input\').click()"><input type="file" accept="image/*" onchange="handleImgUpload(this,\'' + id + '\')"><div class="icon">📸</div><p>Click to upload screenshot / image</p>' + imgTag + '</div>';
+}
+
+function handleImgUpload(input, id) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    localStorage.setItem('img_' + id, e.target.result);
+    renderSlide(activeSlideId);
+  };
+  reader.readAsDataURL(file);
+}
+
+function renderDisciplineSlide(disciplineId) {
+  const d = DISCIPLINES.find(x => x.id === disciplineId);
+  if (!d) return '<div class="slide-card"><div class="card-body">Discipline not found.</div></div>';
+  let html = '<div class="section-divider"><h1>' + d.name + ' Estimate Basis</h1><div class="sub">Slide ' + d.code + '</div></div>';
+  html += card('disc_' + d.id, d.name + ' — Quantification & MTO Methodology', d.code,
+    makeGuidance('Provide summary basis of: Items, quantity and methodology. Identify whether quantities are engineered, factored or allowance based. Reference sources as applicable.') +
+    '<table class="data-table"><tr><th>Commodity</th><th>MTO Methodology</th><th>Method Type</th></tr>' +
+    '<tr><td style="font-weight:600;color:var(--red)">Open Items</td><td>' + ta('disc_open_'+d.id,'List open items...') + '</td><td></td></tr>' +
+    Array.from({length:5},(_, i) => '<tr><td>' + inp('disc_comm_'+d.id+'_'+i,'Commodity name') + '</td><td>' + ta('disc_mto_'+d.id+'_'+i,'Describe MTO basis...') + '</td><td>' + sel('disc_method_'+d.id+'_'+i, MTO_METHODS) + '</td></tr>').join('') + '</table>' +
+    makeBrainDump('disc_quant_' + d.id)
+  );
+  html += card('disc_nto_' + d.id, d.name + ' — NTO Quantity Table', d.code,
+    makeGuidance('Non-Material Takeoff methodology. Identify basis for NTO quantities. Pull screenshot from BETK PowerBI Reports – Allowances.') +
+    makeImageUpload('disc_nto_img_' + d.id) +
+    '<div style="margin-top:16px" class="form-group"><label>NTO Narrative</label>' + ta('disc_nto_narr_'+d.id, 'Describe NTO methodology...') + '</div>'
+  );
+  html += card('disc_pricing_' + d.id, d.name + ' — Pricing Qualifications & Basis', d.code,
+    makeGuidance('Commodity detail, pricing level, cost ($ value), percent (%) of total value. Include discussion on pricing methodology and sources.') +
+    '<div class="form-group"><label>Pricing Narrative</label>' + ta('disc_price_narr_'+d.id, 'Describe pricing methodology, sources, and qualifications...', 6) + '</div>' +
+    makeBrainDump('disc_pricing_' + d.id)
+  );
+  html += card('disc_osm_' + d.id, d.name + ' — OSM v. Stick-Built', d.code,
+    makeGuidance('Provide discipline specific input on how OSM was approached, and key summary of breakout quantities.') +
+    makeImageUpload('disc_osm_img_' + d.id) +
+    '<div style="margin-top:16px" class="form-group"><label>OSM Narrative</label>' + ta('disc_osm_narr_'+d.id, 'Describe OSM approach and breakout...') + '</div>'
+  );
+  html += card('disc_plevel_' + d.id, d.name + ' — Pricing Level Summary & Bulk Material Packages', d.code,
+    makeGuidance('Include pricing level charts identifying bulk material cost by procurement levels (firm, budget, informal, +/-0% etc.)') +
+    makeImageUpload('disc_plevel_img_' + d.id) +
+    '<table class="data-table" style="margin-top:16px"><tr><th>Description</th><th>COA</th><th>MR/Vendor</th><th>Pricing Level</th><th>Cost</th><th>Notes</th></tr>' +
+    Array.from({length:4},(_, i) => '<tr><td>' + inp('disc_bl_desc_'+d.id+'_'+i,'') + '</td><td>' + inp('disc_bl_coa_'+d.id+'_'+i,'') + '</td><td>' + inp('disc_bl_vendor_'+d.id+'_'+i,'') + '</td><td>' + sel('disc_bl_pl_'+d.id+'_'+i, PRICING_LEVELS) + '</td><td>' + inp('disc_bl_cost_'+d.id+'_'+i,'$') + '</td><td>' + inp('disc_bl_notes_'+d.id+'_'+i,'') + '</td></tr>').join('') + '</table>'
+  );
+  html += card('disc_compare_' + d.id, d.name + ' — Quantity & Historical Comparisons', d.code,
+    makeGuidance('Comparison of quantities relevant to the discipline and comparable projects. Pull from BETK PowerBI Reports. Historical comparison slides are REDACTED by default.') +
+    '<div class="form-group"><label>Quantity Comparison (Green & Yellow Tables)</label></div>' +
+    makeImageUpload('disc_qcomp_img_' + d.id) +
+    '<div style="margin-top:16px" class="form-group"><label>Discipline Metric Comparison</label></div>' +
+    makeImageUpload('disc_metric_img_' + d.id) +
+    '<div style="margin-top:16px;padding:12px;background:#FEF3C7;border-radius:8px;font-size:12px;color:#92400E">⚠️ Historical comparisons below are typically <strong>REDACTED</strong> for general distribution.</div>' +
+    '<div style="margin-top:12px" class="form-group"><label>Quantity Historical Comparison</label></div>' +
+    makeImageUpload('disc_qhist_img_' + d.id) +
+    '<div style="margin-top:12px" class="form-group"><label>Hours Historical Comparison</label></div>' +
+    makeImageUpload('disc_hhist_img_' + d.id) +
+    '<div style="margin-top:12px" class="form-group"><label>Cost Historical Comparison</label></div>' +
+    makeImageUpload('disc_chist_img_' + d.id)
+  );
+  return html;
+}
+
+function inp(id, placeholder, type) {
+  type = type || 'text';
+  const val = (localStorage.getItem('f_' + id) || '').replace(/"/g, '&quot;');
+  return '<input type="' + type + '" value="' + val + '" placeholder="' + placeholder + '" oninput="localStorage.setItem(\'f_' + id + '\',this.value);updateProjectName()">';
+}
+
+function sel(id, options) {
+  const val = localStorage.getItem('f_' + id) || '';
+  let html = '<select onchange="localStorage.setItem(\'f_' + id + '\',this.value)"><option value="">— Select —</option>';
+  options.forEach(o => { html += '<option value="' + o + '"' + (val===o?' selected':'') + '>' + o + '</option>'; });
+  return html + '</select>';
+}
+
+function ta(id, placeholder, rows) {
+  rows = rows || 4;
+  const val = (localStorage.getItem('f_' + id) || '').replace(/</g,'&lt;');
+  return '<textarea rows="' + rows + '" placeholder="' + placeholder + '" oninput="localStorage.setItem(\'f_' + id + '\',this.value)">' + val + '</textarea>';
+}
+
+function updateProjectName() {
+  const pn = localStorage.getItem('f_project_name') || 'No Project Selected';
+  document.getElementById('topProjectName').textContent = pn;
+}
+
+function card(slideId, title, num, bodyHtml) {
+  return '<div class="slide-card" id="card_' + slideId + '"><div class="card-header"><div><div class="slide-num">' + num + '</div><h2>' + title + '</h2></div>' + makeRedactCheck(slideId) + '</div><div class="card-body">' + bodyHtml + '</div></div>';
+}
+
+// ============ RENDER SLIDES ============
+function renderSlide(id) {
+  const sv = document.getElementById('slideView');
+  let html = '';
+  const disciplineSlideId = id.startsWith('disc_') ? id.slice(5) : null;
+  if (disciplineSlideId && DISCIPLINES.some(d => d.id === disciplineSlideId)) {
+    html = renderDisciplineSlide(disciplineSlideId);
+    sv.innerHTML = html;
+    updateProjectName();
+    return;
+  }
+
+  switch(id) {
+    case 'cover':
+      html = card(id, 'Estimate Basis and Presentation', 'Cover Page',
+        '<div class="form-row"><div class="form-group"><label>Date</label>' + inp('cover_date','','date') + '</div>' +
+        '<div class="form-group"><label>Project Name</label>' + inp('project_name','Enter project name') + '</div></div>' +
+        '<div class="form-row"><div class="form-group"><label>Client Name</label>' + inp('client_name','Enter client name') + '</div>' +
+        '<div class="form-group"><label>Estimate Class</label>' + sel('est_class', ESTIMATE_CLASSES) + '</div></div>' +
+        '<div class="form-group"><label>Review Type</label>' + sel('review_type', REVIEW_TYPES) + '</div>'
+      );
+      break;
+
+    case 'agenda':
+      html = card(id, 'Review Agenda', 'Agenda',
+        makeGuidance('Typical: services, major cost driver commodities, based on tornado chart of values for Primary Sections.') +
+        '<div class="form-group"><label>Primary Sections</label>' + ta('agenda_primary', 'List primary review topics based on cost drivers...') + '</div>' +
+        '<div class="form-group"><label>Secondary Sections</label>' + ta('agenda_secondary', 'List secondary review topics...') + '</div>' +
+        makeBrainDump('agenda')
+      );
+      break;
+
+    case 'toc':
+      html = '<div class="section-divider"><h1>Table of Contents</h1><div class="sub">Auto-generated from active slides</div></div>';
+      html += '<div class="slide-card"><div class="card-body">';
+      sections.forEach(sec => {
+        html += '<div style="margin-bottom:12px"><strong style="color:var(--navy)">' + sec.title + '</strong>';
+        sec.slides.forEach(sl => {
+          html += '<div style="padding:2px 0 2px 20px;font-size:13px;color:var(--gray3)">' + sl.num + ' — ' + sl.title + '</div>';
+        });
+        html += '</div>';
+      });
+      html += '</div></div>';
+      break;
+
+    case 'safety':
+      html = card(id, 'Safety Moment', 'Safety',
+        '<div class="form-group"><label>Safety Moment Topic</label>' + ta('safety_topic','Enter your safety moment...', 6) + '</div>' +
+        makeImageUpload('safety_img')
+      );
+      break;
+
+    case 'proj_data':
+      html = card(id, 'Project & Estimate Overview — Project Data', '00.001',
+        makeGuidance('This section includes detailed scope description of the facilities, site information, and facility units.') +
+        '<h3 style="color:var(--navy);margin-bottom:16px;font-size:15px">Project Information</h3>' +
+        '<div class="form-row"><div class="form-group"><label>Project Name</label>' + inp('project_name','Project name') + '</div>' +
+        '<div class="form-group"><label>Estimate Scope</label>' + inp('est_scope','Brief scope description') + '</div></div>' +
+        '<div class="form-row"><div class="form-group"><label>Estimate Classification</label>' + sel('pd_class', ESTIMATE_CLASSES) + '</div>' +
+        '<div class="form-group"><label>Client</label>' + inp('client_name','Client name') + '</div></div>' +
+        '<div class="form-row"><div class="form-group"><label>Technology</label>' + inp('technology','e.g., Air-cooled Data Center, Semiconductor Fab') + '</div>' +
+        '<div class="form-group"><label>Location</label>' + inp('location','City, State/Country') + '</div></div>' +
+        '<div class="form-row"><div class="form-group"><label>Engineering 3rd Party Support</label>' + inp('eng_3rd','') + '</div>' +
+        '<div class="form-group"><label>Project Start Date</label>' + inp('proj_start','','date') + '</div></div>' +
+        '<h3 style="color:var(--navy);margin:20px 0 12px;font-size:15px">Key Milestones</h3>' +
+        '<table class="data-table"><tr><th>Milestone</th><th>Description</th><th>Date</th></tr>' +
+        '<tr><td>' + inp('ms1_name','Phase 1 Complete') + '</td><td>' + inp('ms1_desc','') + '</td><td>' + inp('ms1_date','','date') + '</td></tr>' +
+        '<tr><td>' + inp('ms2_name','Phase 2 Complete') + '</td><td>' + inp('ms2_desc','') + '</td><td>' + inp('ms2_date','','date') + '</td></tr>' +
+        '<tr><td>' + inp('ms3_name','Phase 3 Complete') + '</td><td>' + inp('ms3_desc','') + '</td><td>' + inp('ms3_date','','date') + '</td></tr></table>' +
+        '<h3 style="color:var(--navy);margin:20px 0 12px;font-size:15px">Bechtel Information</h3>' +
+        '<div class="form-row"><div class="form-group"><label>Bechtel Entity</label>' + sel('bech_entity', BECHTEL_ENTITIES) + '</div>' +
+        '<div class="form-group"><label>Performing Office(s)</label>' + sel('perf_office', PERFORMING_OFFICES) + '</div></div>' +
+        '<div class="form-row"><div class="form-group"><label>Joint Venture Partners / Other GBUs</label>' + inp('jv_partners','') + '</div>' +
+        '<div class="form-group"><label>Estimate DOR</label>' + inp('est_dor','') + '</div></div>' +
+        '<div class="form-row"><div class="form-group"><label>Owner\'s Scope</label>' + inp('owner_scope','') + '</div>' +
+        '<div class="form-group"><label>Critical 3rd Party Subs</label>' + inp('crit_subs','') + '</div></div>' +
+        '<div class="form-row"><div class="form-group"><label>Reference Project</label>' + inp('ref_project','') + '</div>' +
+        '<div class="form-group"><label>Purpose of Estimate</label>' + inp('est_purpose','') + '</div></div>' +
+        '<div class="form-row"><div class="form-group"><label>Standard Work Week</label>' + sel('work_week', WORK_WEEKS) + '</div>' +
+        '<div class="form-group"><label>Union / Open Shop</label>' + sel('labor_type', LABOR_TYPES) + '</div></div>' +
+        makeBrainDump('proj_data')
+      );
+      break;
+
+    case 'est_basis':
+      html = card(id, 'Summary Estimate Basis & Open Items', '00.002',
+        makeGuidance('Provide a high-level summary of the estimate basis for each major scope/cost account area and note any open items.') +
+        '<table class="data-table"><tr><th>Scope / Cost Account</th><th>Estimate Basis</th></tr>' +
+        ['Overall Scope','Equipment & Bulks','Construction Directs','OSM','Construction Indirects','Home Office Services','Bechtel Field Professional Services','Open Items'].map((item,i) =>
+          '<tr><td style="font-weight:600;width:220px">' + item + '</td><td>' + ta('eb_' + i, 'Describe estimate basis for ' + item) + '</td></tr>'
+        ).join('') + '</table>' + makeBrainDump('est_basis')
+      );
+      break;
+
+    case 'site_plan':
+      html = card(id, 'Site Plan', '00.003',
+        makeGuidance('Consider inclusion of "acres of construction" value to demonstrate size of site area.') +
+        '<div class="form-group"><label>Site Area (acres)</label>' + inp('site_acres','e.g., 150 acres') + '</div>' +
+        makeImageUpload('site_plan') + makeBrainDump('site_plan')
+      );
+      break;
+
+    case 'est_class':
+      html = card(id, 'Estimate Classification — Graph & Narrative', '00.004',
+        makeGuidance('Insert brief writeup of the expected classification and how it has been achieved or deviates from the intent. Use the Estimate Classification template to explain the basis. Discuss the estimate classification determination basis and how specific requirements were maintained for compliance (design input, estimating techniques, procurement quality). Highlight significant items that affected accuracy and/or contingency assessment.') +
+        '<div class="form-group"><label>Estimate Classification</label>' + sel('class_select', ESTIMATE_CLASSES) + '</div>' +
+        '<table class="data-table" style="margin-bottom:20px"><tr><th></th><th>Class 5</th><th>Class 4</th><th>Class 3</th><th>Class 2</th><th>Class 1</th></tr>' +
+        '<tr><td style="font-weight:600">Accuracy (Low)</td><td>-20% to -50%</td><td>-15% to -30%</td><td>-10% to -20%</td><td>-5% to -15%</td><td>-3% to -10%</td></tr>' +
+        '<tr><td style="font-weight:600">Accuracy (High)</td><td>+30% to +100%</td><td>+20% to +50%</td><td>+10% to +30%</td><td>+5% to +20%</td><td>+3% to +15%</td></tr>' +
+        '<tr><td style="font-weight:600">Description</td><td>Indicative/Conceptual</td><td>Feasibility/ROM</td><td>Preliminary</td><td>Engineer\'s</td><td>Definitive</td></tr>' +
+        '<tr><td style="font-weight:600">Eng. % Complete</td><td>0%–2%</td><td>1%–15%</td><td>10%–40%</td><td>30%–70%</td><td>50%–100%</td></tr></table>' +
+        '<div class="form-group"><label>Classification Narrative</label>' + ta('class_narrative','Describe classification basis, compliance, and accuracy assessment...', 6) + '</div>' +
+        makeImageUpload('class_graph') + makeBrainDump('est_class')
+      );
+      break;
+
+    case 'risks_opps':
+      html = card(id, 'Key Risks and Opportunities', '00.005',
+        makeGuidance('A simple list of the key risks and opportunities from an estimate perspective, where there are risks for the cost to grow and opportunities where the cost may shrink.') +
+        '<div class="form-group"><label>⚠️ Key Risks</label>' + ta('risks','List key estimate risks where cost may grow...', 6) + '</div>' +
+        '<div class="form-group"><label>✅ Key Opportunities</label>' + ta('opps','List key opportunities where cost may shrink...', 6) + '</div>' +
+        makeBrainDump('risks_opps')
+      );
+      break;
+
+    case 'capacity':
+      html = card(id, 'Cost per Capacity Metrics', '00.006',
+        makeGuidance('Standard factored metrics for facility capacity — $/SF, $/MW, etc.') +
+        '<div class="form-row"><div class="form-group"><label>$/SF</label>' + inp('cost_sf','e.g., $450/SF') + '</div>' +
+        '<div class="form-group"><label>$/MW</label>' + inp('cost_mw','e.g., $12M/MW') + '</div></div>' +
+        '<div class="form-group"><label>Narrative</label>' + ta('capacity_narrative','Describe capacity metrics and comparison to benchmarks...') + '</div>' +
+        makeImageUpload('capacity_img') + makeBrainDump('capacity')
+      );
+      break;
+
+    case 'exec_plan':
+      html = card(id, 'Execution Plan Summary', '02.001',
+        makeGuidance('Execution strategy including engineering, construction, project controls, procurement, contracts and startup scope and roles and responsibilities.') +
+        '<table class="data-table"><tr><th style="width:180px">Function</th><th>Writeup</th></tr>' +
+        '<tr><td><strong>General</strong><br>' + sel('exec_contract', CONTRACT_TYPES) + '</td><td>' + ta('exec_general','Lead office, delivery model, JV roles...') + '</td></tr>' +
+        '<tr><td><strong>Engineering</strong></td><td>' + ta('exec_eng','Engineering office, approach...') + '</td></tr>' +
+        '<tr><td><strong>Procurement</strong></td><td>' + ta('exec_proc','MPAGs, Global Supply Network, local procurement...') + '</td></tr>' +
+        '<tr><td><strong>Construction</strong><br>' + sel('exec_const_entity', CONSTRUCTION_ENTITIES) + '</td><td>' + ta('exec_const','Direct hire/subcontract, work week, shift schedule...') + '</td></tr>' +
+        '<tr><td><strong>Startup</strong></td><td>' + ta('exec_startup','Startup support, local hires, shared personnel...') + '</td></tr>' +
+        '<tr><td><strong>Management</strong></td><td>' + ta('exec_mgmt','PM duration, business management, schedule transfer...') + '</td></tr></table>' +
+        makeBrainDump('exec_plan')
+      );
+      break;
+
+    case 'sched_basis':
+      html = card(id, 'Schedule Basis & Assumptions', '02.021',
+        makeGuidance('Describe the schedule development process and include key events and dates. Provide information on early works, critical path, schedule qualifications and assumptions, and schedule risk and opportunities. Example: The schedule has a XX-month target completion and a XX-month guaranteed completion from NTP.') +
+        '<table class="data-table"><tr><th>Date</th><th>Description</th></tr>' +
+        Array.from({length:8},(_, i) => '<tr><td>' + inp('sd_date_'+i,'','date') + '</td><td>' + inp('sd_desc_'+i,'Key milestone description') + '</td></tr>').join('') + '</table>' +
+        '<div style="margin-top:16px" class="form-group"><label>Schedule Basis Narrative</label>' + ta('sched_narrative','Describe schedule development, target/guaranteed completion, LNTP period...', 6) + '</div>' +
+        makeBrainDump('sched_basis')
+      );
+      break;
+
+    case 'disciplines':
+      html = '<div class="section-divider"><h1>03.000 Estimate Basis — By Discipline</h1><div class="sub">Select a discipline to view and edit</div></div>';
+      const activeDiscipline = localStorage.getItem('active_discipline') || 'civil';
+      html += '<div class="discipline-tabs">';
+      DISCIPLINES.forEach(d => {
+        html += '<button class="' + (d.id===activeDiscipline?'active':'') + '" onclick="localStorage.setItem(\'active_discipline\',\'' + d.id + '\');renderSlide(\'disciplines\')">' + d.name + '</button>';
+      });
+      html += '</div>';
+      const d = DISCIPLINES.find(x => x.id === activeDiscipline);
+      html += card('disc_' + d.id, d.name + ' — Quantification & MTO Methodology', d.code,
+        makeGuidance('Provide summary basis of: Items, quantity and methodology. Identify whether quantities are engineered, factored or allowance based. Reference sources as applicable.') +
+        '<table class="data-table"><tr><th>Commodity</th><th>MTO Methodology</th><th>Method Type</th></tr>' +
+        '<tr><td style="font-weight:600;color:var(--red)">Open Items</td><td>' + ta('disc_open_'+d.id,'List open items...') + '</td><td></td></tr>' +
+        Array.from({length:5},(_, i) => '<tr><td>' + inp('disc_comm_'+d.id+'_'+i,'Commodity name') + '</td><td>' + ta('disc_mto_'+d.id+'_'+i,'Describe MTO basis...') + '</td><td>' + sel('disc_method_'+d.id+'_'+i, MTO_METHODS) + '</td></tr>').join('') + '</table>' +
+        makeBrainDump('disc_quant_' + d.id)
+      );
+      html += card('disc_nto_' + d.id, d.name + ' — NTO Quantity Table', d.code,
+        makeGuidance('Non-Material Takeoff methodology. Identify basis for NTO quantities. Pull screenshot from BETK PowerBI Reports – Allowances.') +
+        makeImageUpload('disc_nto_img_' + d.id) +
+        '<div style="margin-top:16px" class="form-group"><label>NTO Narrative</label>' + ta('disc_nto_narr_'+d.id, 'Describe NTO methodology...') + '</div>'
+      );
+      html += card('disc_pricing_' + d.id, d.name + ' — Pricing Qualifications & Basis', d.code,
+        makeGuidance('Commodity detail, pricing level, cost ($ value), percent (%) of total value. Include discussion on pricing methodology and sources.') +
+        '<div class="form-group"><label>Pricing Narrative</label>' + ta('disc_price_narr_'+d.id, 'Describe pricing methodology, sources, and qualifications...', 6) + '</div>' +
+        makeBrainDump('disc_pricing_' + d.id)
+      );
+      html += card('disc_osm_' + d.id, d.name + ' — OSM v. Stick-Built', d.code,
+        makeGuidance('Provide discipline specific input on how OSM was approached, and key summary of breakout quantities.') +
+        makeImageUpload('disc_osm_img_' + d.id) +
+        '<div style="margin-top:16px" class="form-group"><label>OSM Narrative</label>' + ta('disc_osm_narr_'+d.id, 'Describe OSM approach and breakout...') + '</div>'
+      );
+      html += card('disc_plevel_' + d.id, d.name + ' — Pricing Level Summary & Bulk Material Packages', d.code,
+        makeGuidance('Include pricing level charts identifying bulk material cost by procurement levels (firm, budget, informal, +/-0% etc.)') +
+        makeImageUpload('disc_plevel_img_' + d.id) +
+        '<table class="data-table" style="margin-top:16px"><tr><th>Description</th><th>COA</th><th>MR/Vendor</th><th>Pricing Level</th><th>Cost</th><th>Notes</th></tr>' +
+        Array.from({length:4},(_, i) => '<tr><td>' + inp('disc_bl_desc_'+d.id+'_'+i,'') + '</td><td>' + inp('disc_bl_coa_'+d.id+'_'+i,'') + '</td><td>' + inp('disc_bl_vendor_'+d.id+'_'+i,'') + '</td><td>' + sel('disc_bl_pl_'+d.id+'_'+i, PRICING_LEVELS) + '</td><td>' + inp('disc_bl_cost_'+d.id+'_'+i,'$') + '</td><td>' + inp('disc_bl_notes_'+d.id+'_'+i,'') + '</td></tr>').join('') + '</table>'
+      );
+      html += card('disc_compare_' + d.id, d.name + ' — Quantity & Historical Comparisons', d.code,
+        makeGuidance('Comparison of quantities relevant to the discipline and comparable projects. Pull from BETK PowerBI Reports. Historical comparison slides are REDACTED by default.') +
+        '<div class="form-group"><label>Quantity Comparison (Green & Yellow Tables)</label></div>' +
+        makeImageUpload('disc_qcomp_img_' + d.id) +
+        '<div style="margin-top:16px" class="form-group"><label>Discipline Metric Comparison</label></div>' +
+        makeImageUpload('disc_metric_img_' + d.id) +
+        '<div style="margin-top:16px;padding:12px;background:#FEF3C7;border-radius:8px;font-size:12px;color:#92400E">⚠️ Historical comparisons below are typically <strong>REDACTED</strong> for general distribution.</div>' +
+        '<div style="margin-top:12px" class="form-group"><label>Quantity Historical Comparison</label></div>' +
+        makeImageUpload('disc_qhist_img_' + d.id) +
+        '<div style="margin-top:12px" class="form-group"><label>Hours Historical Comparison</label></div>' +
+        makeImageUpload('disc_hhist_img_' + d.id) +
+        '<div style="margin-top:12px" class="form-group"><label>Cost Historical Comparison</label></div>' +
+        makeImageUpload('disc_chist_img_' + d.id)
+      );
+      break;
+
+    case 'wage_rates':
+      html = card(id, 'Craft Wage Rates Table', '05.013',
+        makeGuidance('Provide the basis for wage rate and crew makeup development. Discuss supervision and craft wage rates. Include summary table of wages rates per craft and/or crew mix, including allowances for OT, weather, rotations, incentives, etc.') +
+        '<table class="data-table"><tr><th>COA</th><th>Description</th><th>Project All-in Rate</th><th>Reference Rate</th><th>Delta</th><th>Notes</th></tr>' +
+        [['11','Earthwork'],['12','Concrete'],['13','Steel'],['14','Architectural'],['15','Pipe'],['16','Electrical'],['17','Instrumentation'],['18','Paint/Fireproof/Insulation'],['19','Misc Operations'],['2x','Mechanical Equipment'],['28','Electrical Equipment'],['3x','Specialized Equipment']].map((r,i) =>
+          '<tr><td style="font-weight:600">' + r[0] + '</td><td>' + r[1] + '</td><td>' + inp('wr_rate_'+i,'$') + '</td><td>' + inp('wr_ref_'+i,'$') + '</td><td>' + inp('wr_delta_'+i,'$') + '</td><td>' + inp('wr_notes_'+i,'') + '</td></tr>'
+        ).join('') + '</table>' + makeBrainDump('wage_rates')
+      );
+      break;
+
+    case 'decline_perf':
+      html = card(id, 'Declining Performance Checklist', '06.008',
+        makeGuidance('Roll up declining performance checklist and evaluate R/Y/G for each category. See MT-GBU-EDT-0015-RevA for detailed criteria.') +
+        '<table class="data-table"><tr><th>Checklist Item</th><th>Status</th></tr>' +
+        ['Obtained 3+ quotes for Mechanical Equipment','Obtained 3+ quotes for Electrical Equipment','Obtained 3+ quotes for Pre-fab Substations','Obtained 3+ quotes for Steel','Obtained 3+ quotes for Pipe','Obtained 3+ quotes for Cable','Obtained 3+ quotes for Instruments',
+         'Pricing based on most capable supplier (Mech Equip)','Pricing based on most capable supplier (Elec Equip)','Pricing based on most capable supplier (Steel)','Pricing based on most capable supplier (Pipe)',
+         'Direct labor PF based on WBS-level complexity','Unit Rate & PF comparison to ACTUAL projects','Bechtel steel detailing','PLA in place','Craft availability assessment completed',
+         'P50 schedule as basis (P80 for unique)','House load costs to P75 duration','Standard escalation model based on procurement forecasts','Currency exposure and hedging in place',
+         'Estimate classification demonstrated via venturi chart','Customer specs familiar / similar to previous','Clarity of scope in vendor EP packages',
+         'Contingency based on historical MIN/MAX limits','Contingency supplemented by cost sensitivity analysis','Separate risk assessment for risk event costs',
+         'Historical data used for optimistic/pessimistic (no Optimism Bias)','Bechtel technology experts reviewed scope','Cold eyes evaluated FOAK and scale-up risks','Lessons learned implemented'].map((item,i) =>
+          '<tr><td style="font-size:12px">' + item + '</td><td style="width:120px">' + sel('dpc_'+i, ['Yes','No','N/A','Partial']) + '</td></tr>'
+        ).join('') + '</table>' + makeBrainDump('decline_perf')
+      );
+      break;
+
+    case 'aqe':
+      html = card(id, 'Assumptions, Qualifications & Exclusions', '07.001',
+        makeGuidance('Key Assumptions, qualifications and exclusions. Organize and list by commodity or category (general, procurement, construction, commissioning, etc.)') +
+        '<table class="data-table"><tr><th>#</th><th>Type</th><th>Function</th><th>Discipline</th><th>Description</th></tr>' +
+        Array.from({length:15},(_, i) => '<tr><td style="width:40px;text-align:center">' + String(i+1).padStart(2,'0') + '</td><td style="width:130px">' + sel('aqe_type_'+i, ['Assumption','Qualification','Exclusion']) + '</td><td style="width:130px">' + inp('aqe_func_'+i,'') + '</td><td style="width:130px">' + inp('aqe_disc_'+i,'') + '</td><td>' + inp('aqe_desc_'+i,'Description...') + '</td></tr>').join('') + '</table>' +
+        makeBrainDump('aqe')
+      );
+      break;
+
+    case 'trends':
+      html = card(id, 'Trends & Late Changes', '07.002',
+        makeGuidance('Summary of late changes captured outside the body of the estimate and any basis changes incurred.') +
+        '<table class="data-table"><tr><th>#</th><th>Change Type</th><th>Title</th><th>Value ($)</th><th>Comments</th></tr>' +
+        Array.from({length:10},(_, i) => '<tr><td style="width:40px;text-align:center">' + String(i+1).padStart(2,'0') + '</td><td style="width:130px">' + sel('tr_type_'+i, ['Addition','Deletion','Revision','Scope Change']) + '</td><td>' + inp('tr_title_'+i,'') + '</td><td style="width:120px">' + inp('tr_val_'+i,'$') + '</td><td>' + inp('tr_comments_'+i,'') + '</td></tr>').join('') + '</table>'
+      );
+      break;
+
+    case 'hl_summary':
+      html = card(id, 'High-Level Estimate Summary', '00.021',
+        makeGuidance('Summarize total estimate value, major drivers, and the recommended cost position for executive review.') +
+        '<div class="form-row"><div class="form-group"><label>Total Estimate</label>' + inp('hl_total','e.g., $XXXM') + '</div>' +
+        '<div class="form-group"><label>Contingency / Risk</label>' + inp('hl_contingency','e.g., $XXM') + '</div></div>' +
+        '<div class="form-group"><label>Major Cost Drivers</label>' + ta('hl_drivers','List primary cost drivers...') + '</div>' +
+        '<div class="form-group"><label>Key Assumptions</label>' + ta('hl_assumptions','List top assumptions...') + '</div>' +
+        makeImageUpload('hl_summary_chart') +
+        makeBrainDump('hl_summary')
+      );
+      break;
+
+    case 'sensitivity':
+      html = card(id, 'Sensitivity Analysis', '00.022',
+        makeGuidance('Capture the key variables that most affect the total estimate value. Use a simple table or tornado chart narrative.') +
+        '<table class="data-table"><tr><th>Factor</th><th>Impact +/-</th><th>Basis</th></tr>' +
+        Array.from({length:6},(_, i) => '<tr><td>' + inp('sens_factor_'+i,'') + '</td><td>' + inp('sens_impact_'+i,'') + '</td><td>' + inp('sens_basis_'+i,'') + '</td></tr>').join('') + '</table>' +
+        '<div class="form-group"><label>Conclusions</label>' + ta('sens_conclusions','Summarize the highest-impact sensitivities...') + '</div>' +
+        makeImageUpload('sensitivity_chart')
+      );
+      break;
+
+    case 'exec_cost':
+      html = card(id, 'Executive Cost Summary', '00.023',
+        makeGuidance('Executive summary of direct & indirect costs, plus any excluded fee note. Align this with Exhibit 01 content.') +
+        '<table class="data-table"><tr><th>Category</th><th>Estimate Value</th><th>Notes</th></tr>' +
+        ['Directs','Construction Indirects','Home Office','Field Services','Escalation','Contingency','Fee (excluded)'].map((item,i) =>
+          '<tr><td style="font-weight:600">' + item + '</td><td>' + inp('exec_val_'+i,'$') + '</td><td>' + inp('exec_note_'+i,'') + '</td></tr>'
+        ).join('') + '</table>' +
+        '<div class="form-group"><label>Executive Commentary</label>' + ta('exec_commentary','Summary for leadership review...') + '</div>'
+      );
+      break;
+
+    case 'comparisons':
+      html = card(id, 'Project Summary Comparisons', '00.024',
+        makeGuidance('Show comparatives for the current estimate against benchmark projects or past similar work. Add supporting tables or charts.') +
+        '<div class="form-group"><label>Comparison Narrative</label>' + ta('comp_narrative','Describe the comparative context and key differentiators...') + '</div>' +
+        makeImageUpload('comp_table_img') +
+        makeImageUpload('comp_chart_img')
+      );
+      break;
+
+    case 'waterfall':
+      html = card(id, 'Waterfall Comparison', '00.025',
+        makeGuidance('Provide a waterfall or bridge chart summary of estimate reconciliation from base estimate to current estimate.') +
+        '<div class="form-group"><label>Waterfall Narrative</label>' + ta('waterfall_narr','Describe the major movements shown in the waterfall...') + '</div>' +
+        makeImageUpload('waterfall_img')
+      );
+      break;
+
+    case 'currency':
+      html = card(id, 'Currency Narrative & Exchange Table', '00.026',
+        makeGuidance('Document currency assumptions, exchange rates, and conversion basis. Include any hedging or exposure notes.') +
+        '<div class="form-row"><div class="form-group"><label>Base Currency</label>' + inp('currency_base','USD / EUR / etc.') + '</div>' +
+        '<div class="form-group"><label>Report Currency</label>' + inp('currency_report','USD / EUR / etc.') + '</div></div>' +
+        '<div class="form-group"><label>Currency Narrative</label>' + ta('currency_narrative','Describe exchange rate assumptions and currency risk management...') + '</div>' +
+        '<table class="data-table"><tr><th>Currency</th><th>Rate</th><th>Apply To</th></tr>' +
+        Array.from({length:4},(_, i) => '<tr><td>' + inp('currency_code_'+i,'') + '</td><td>' + inp('currency_rate_'+i,'') + '</td><td>' + inp('currency_apply_'+i,'') + '</td></tr>').join('') + '</table>'
+      );
+      break;
+
+    case 'design_basis':
+      html = card(id, 'Summary Basis of Design', '01.001',
+        makeGuidance('Summarize the design basis, stage of definition, and any assumptions that affect the estimate.') +
+        '<div class="form-group"><label>Design Basis Summary</label>' + ta('design_basis_summary','Describe the design basis and key design drivers...', 6) + '</div>' +
+        '<div class="form-group"><label>Design Stage / Definition Level</label>' + ta('design_stage','E.g., 30% FEED, 60% detailed, etc...') + '</div>' +
+        makeImageUpload('design_basis_img')
+      );
+      break;
+
+    case 'sched_l1':
+      html = card(id, 'Schedule – Level 1', '02.022',
+        makeGuidance('Capture the Level 1 master schedule view, including key milestones and completion targets.') +
+        '<table class="data-table"><tr><th>Milestone</th><th>Date</th><th>Status</th></tr>' +
+        Array.from({length:6},(_, i) => '<tr><td>' + inp('l1_milestone_'+i,'') + '</td><td>' + inp('l1_date_'+i,'','date') + '</td><td>' + sel('l1_status_'+i, ['Planned','Committed','At Risk']) + '</td></tr>').join('') + '</table>' +
+        '<div class="form-group"><label>L1 Summary</label>' + ta('l1_narrative','Summarize the level 1 schedule status and logic...', 5) + '</div>' +
+        makeImageUpload('l1_schedule_img')
+      );
+      break;
+
+    case 'crit_path':
+      html = card(id, 'Critical Paths', '02.023',
+        makeGuidance('List primary critical paths, long lead dependencies, and any known schedule risks.') +
+        '<div class="form-group"><label>Primary Critical Path</label>' + ta('crit_primary','Describe the primary critical path...', 4) + '</div>' +
+        '<div class="form-group"><label>Secondary Critical Path</label>' + ta('crit_secondary','Describe the secondary critical path...', 4) + '</div>' +
+        makeImageUpload('crit_path_img')
+      );
+      break;
+
+    case 'headcount':
+      html = card(id, 'Craft Head Count', '02.025',
+        makeGuidance('Show planned craft headcount build-up, peak staffing levels, and hiring risks.') +
+        '<table class="data-table"><tr><th>Week</th><th>Craft Headcount</th><th>Notes</th></tr>' +
+        Array.from({length:6},(_, i) => '<tr><td>' + inp('hc_week_'+i,'') + '</td><td>' + inp('hc_count_'+i,'') + '</td><td>' + inp('hc_notes_'+i,'') + '</td></tr>').join('') + '</table>' +
+        '<div class="form-group"><label>Headcount Commentary</label>' + ta('hc_narrative','Comment on headcount ramp and risks...') + '</div>'
+      );
+      break;
+
+    case 'sched_metrics':
+      html = card(id, 'Schedule Metrics', '02.026',
+        makeGuidance('Capture key schedule metrics such as duration, float, productivity benchmarks, and schedule risk measures.') +
+        '<table class="data-table"><tr><th>Metric</th><th>Value</th><th>Benchmark / Notes</th></tr>' +
+        ['Total Duration','Critical Path Duration','Float','Productivity Benchmark','Percent Complete'].map((item,i) =>
+          '<tr><td style="font-weight:600">' + item + '</td><td>' + inp('sched_metric_'+i,'') + '</td><td>' + inp('sched_metric_note_'+i,'') + '</td></tr>'
+        ).join('') + '</table>' +
+        makeBrainDump('sched_metrics')
+      );
+      break;
+
+    case 'est_general':
+      html = card(id, 'General Quantification & Pricing', '03.010',
+        makeGuidance('Summarize general estimate quantification and pricing basis across the project.') +
+        '<div class="form-group"><label>General Basis Narrative</label>' + ta('estgen_narrative','Summarize the general quantification and pricing basis...', 6) + '</div>' +
+        '<table class="data-table"><tr><th>Category</th><th>Basis</th><th>Key Qualification</th></tr>' +
+        ['Engineering','Procurement','Construction','Indirects','Contingency'].map((item,i) =>
+          '<tr><td style="font-weight:600">' + item + '</td><td>' + ta('estgen_basis_'+i,'') + '</td><td>' + inp('estgen_qual_'+i,'') + '</td></tr>'
+        ).join('') + '</table>'
+      );
+      break;
+
+    case 'est_scas':
+      html = card(id, 'SCAS & Contracting Plan', '03.017',
+        makeGuidance('Document the SCAS summary, package count, contracting approach, and estimate support status for packages.') +
+        '<table class="data-table"><tr><th>SCAS Element</th><th>Detail</th></tr>' +
+        ['Package Count','Contracting Strategy','DH/Subcontract Split','Estimate Support Status','Open Pricing Items'].map((item,i) =>
+          '<tr><td style="font-weight:600">' + item + '</td><td>' + ta('scas_' + i,'') + '</td></tr>'
+        ).join('') + '</table>' +
+        makeBrainDump('est_scas')
+      );
+      break;
+
+    case 'est_wbs':
+      html = card(id, 'Work Breakdown Structure', '03.018',
+        makeGuidance('Summarize the estimate structure and WBS logic. Include top-level grouping and key aggregation points.') +
+        '<div class="form-group"><label>WBS Narrative</label>' + ta('wbs_narrative','Describe how the estimate is structured and aggregated...', 6) + '</div>' +
+        makeImageUpload('wbs_structure_img')
+      );
+      break;
+
+    case 'indirects':
+      html = card(id, 'Indirects Basis of Estimate', '05.021',
+        makeGuidance('Explain the indirect cost basis and methodology used to derive construction indirects and field/project overheads.') +
+        '<table class="data-table"><tr><th>Indirect Category</th><th>Basis</th><th>Notes</th></tr>' +
+        ['Project Overhead','Construction Indirects','Field Overheads','Support Services'].map((item,i) =>
+          '<tr><td style="font-weight:600">' + item + '</td><td>' + ta('indirect_basis_' + i,'') + '</td><td>' + inp('indirect_note_' + i,'') + '</td></tr>'
+        ).join('') + '</table>' +
+        makeBrainDump('indirects')
+      );
+      break;
+
+    case 'prof_svcs':
+      html = card(id, 'Professional Services', '05.022',
+        makeGuidance('Capture the basis for professional services, including engineering, project management, commissioning, and specialty services.') +
+        '<div class="form-group"><label>Professional Services Narrative</label>' + ta('prof_narrative','Describe professional services scope and basis...', 6) + '</div>' +
+        '<table class="data-table"><tr><th>Service</th><th>Basis</th><th>Cost</th></tr>' +
+        ['Engineering Support','Project Management','Commissioning','Specialty Consultants'].map((item,i) =>
+          '<tr><td style="font-weight:600">' + item + '</td><td>' + ta('prof_basis_' + i,'') + '</td><td>' + inp('prof_cost_' + i,'$') + '</td></tr>'
+        ).join('') + '</table>'
+      );
+      break;
+
+    case 'staffing':
+      html = card(id, 'Staffing Curves', '05.046',
+        makeGuidance('Include a staffing curve summary and narrative on resource build, peak staffing, and labor strategy.') +
+        '<div class="form-group"><label>Staffing Curve Narrative</label>' + ta('staffing_narrative','Describe staffing curves, peaks, and risks...', 6) + '</div>' +
+        makeImageUpload('staffing_curve_img')
+      );
+      break;
+
+    case 'escalation':
+      html = card(id, 'Escalation', '06.001',
+        makeGuidance('Describe the escalation model, indices, assumptions, and base date used for the estimate.') +
+        '<div class="form-group"><label>Escalation Narrative</label>' + ta('escalation_narrative','Describe escalation basis and assumptions...', 6) + '</div>' +
+        '<table class="data-table"><tr><th>Escalation Item</th><th>Assumption</th><th>Rate</th></tr>' +
+        Array.from({length:4},(_, i) => '<tr><td>' + inp('esc_item_'+i,'') + '</td><td>' + inp('esc_assumption_'+i,'') + '</td><td>' + inp('esc_rate_'+i,'%') + '</td></tr>').join('') + '</table>'
+      );
+      break;
+
+    case 'contingency':
+      html = card(id, 'Contingency', '06.002',
+        makeGuidance('Document the contingency methodology, ranges, and how contingency supports estimate classification and risk.') +
+        '<div class="form-group"><label>Contingency Approach</label>' + ta('contingency_approach','Describe contingency methodology...', 5) + '</div>' +
+        '<table class="data-table"><tr><th>Contingency Type</th><th>Value</th><th>Basis</th></tr>' +
+        ['Design','Scope','Schedule','Cost'].map((item,i) =>
+          '<tr><td style="font-weight:600">' + item + '</td><td>' + inp('cont_val_'+i,'$') + '</td><td>' + inp('cont_basis_'+i,'') + '</td></tr>'
+        ).join('') + '</table>'
+      );
+      break;
+
+    case 'risk_assess':
+      html = card(id, 'Risk Assessment', '06.003',
+        makeGuidance('Summarize risk assessment findings, risk register highlights, and whether risk value is included in the estimate.') +
+        '<div class="form-group"><label>Risk Assessment Summary</label>' + ta('risk_summary','Summarize risk assessment results...', 6) + '</div>' +
+        '<table class="data-table"><tr><th>Risk Area</th><th>Impact</th><th>Mitigation</th></tr>' +
+        Array.from({length:5},(_, i) => '<tr><td>' + inp('risk_area_'+i,'') + '</td><td>' + inp('risk_impact_'+i,'') + '</td><td>' + ta('risk_mitigation_'+i,'',2) + '</td></tr>').join('') + '</table>'
+      );
+      break;
+
+    case 'fee':
+      html = card(id, 'Fee', '06.004',
+        makeGuidance('Fee is typically excluded from pre-read materials and marked redacted. Capture the fee basis and exclusion notes for restricted review.') +
+        '<div class="form-group"><label>Fee Basis Narrative</label>' + ta('fee_narrative','Describe fee strategy, margin, and exclusions...', 5) + '</div>' +
+        makeImageUpload('fee_img')
+      );
+      break;
+
+    case 'benchmarks':
+      html = card(id, 'Historical Benchmarks', '06.005',
+        makeGuidance('This slide is typically redacted for pre-read. Document benchmark sources and comparisons for restricted review only.') +
+        '<div class="form-group"><label>Benchmark Narrative</label>' + ta('benchmarks_narrative','Describe benchmark sources and relevance...', 6) + '</div>' +
+        makeImageUpload('benchmarks_img')
+      );
+      break;
+
+    case 'other_metrics':
+      html = card(id, 'Other Costs Metrics', '06.006',
+        makeGuidance('Include additional cost metrics such as $/unit, $/ton, productivity measures, or comparative indices.') +
+        '<table class="data-table"><tr><th>Metric</th><th>Value</th><th>Benchmark</th></tr>' +
+        ['$/Unit','$/Ton','$/Installation Hour','Productivity Index'].map((item,i) =>
+          '<tr><td style="font-weight:600">' + item + '</td><td>' + inp('other_metric_'+i,'') + '</td><td>' + inp('other_bench_'+i,'') + '</td></tr>'
+        ).join('') + '</table>' +
+        makeBrainDump('other_metrics')
+      );
+      break;
+
+    case 'appendix':
+      html = card(id, 'Appendices', '08.000',
+        makeGuidance('Use this section for supporting material, definitions, data sources, and attachments.') +
+        '<div class="form-group"><label>Appendix Notes</label>' + ta('appendix_notes','List supporting documents, data sources, and attachments...') + '</div>' +
+        makeImageUpload('appendix_img')
+      );
+      break;
+
+    default:
+      // Generic narrative slides
+      const allSlides = sections.flatMap(s => s.slides);
+      const slideInfo = allSlides.find(s => s.id === id);
+      if (slideInfo) {
+        html = card(id, slideInfo.title, slideInfo.num,
+          makeGuidance('Refer to the Estimate Basis/Review Book Template (MT-GBU-EDT-0019 Rev.C) for detailed instructions on this section.') +
+          '<div class="form-group"><label>Narrative / Content</label>' + ta('generic_' + id, 'Enter content for ' + slideInfo.title + '...', 8) + '</div>' +
+          makeImageUpload('generic_img_' + id) +
+          makeBrainDump(id)
+        );
+      }
+      break;
+  }
+
+  sv.innerHTML = html;
+  updateProjectName();
+}
+
+// ============ INIT ============
+buildSidebar();
+renderSlide(activeSlideId);
+updateProjectName();
+</script>
+
+<!-- STATUS BAR -->
+<div class="statusbar">
+  <div class="sdot" id="sdot"></div>
+  <span id="statusMsg">Ready</span>
+  <span>|</span>
+  <span id="rdctCt">0 redacted</span>
+  <span style="margin-left:auto">company xyz Internal & External Distribution · ©2025</span>
+</div>
+
+<!-- FILE MODAL -->
+<div class="modal-bg" id="fileModal">
+  <div class="modal">
+    <div class="modal-hdr"><h3>📎 AI Document Assistant</h3><button class="modal-x" onclick="closeFileModal()">✕</button></div>
+    <div class="modal-body">
+      <div style="background:#EFF6FF;border:1px solid #BFDBFE;border-radius:8px;padding:12px 16px;font-size:12px;color:#1E40AF;">
+        💡 Upload any project document — estimates, SOWs, specs, schedules. AI extracts key data and auto-populates relevant slides.
+      </div>
+      <div class="drop-zone" id="dropZone" ondrop="onDrop(event)" ondragover="event.preventDefault();this.classList.add('over')" ondragleave="this.classList.remove('over')" onclick="document.getElementById('fileIn').click()">
+        <div class="dico">📂</div>
+        <p><span>Browse files</span> or drag & drop here</p>
+        <p style="font-size:11px;margin-top:4px;">PDF · XLSX · DOCX · CSV · PNG · JPG</p>
+      </div>
+      <input type="file" id="fileIn" style="display:none" multiple onchange="onFileSel(event)">
+      <div class="file-list" id="fileList"></div>
+      <div>
+        <label style="display:block;font-size:12px;font-weight:600;color:var(--navy);margin-bottom:6px;">What should AI look for?</label>
+        <textarea id="extractInstr" rows="3" style="width:100%;padding:9px;border:1px solid var(--gray);border-radius:7px;font-size:13px;font-family:inherit;" placeholder="e.g. Extract cost totals, key milestones, estimate class, scope exclusions, and all assumptions."></textarea>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn-cancel" onclick="closeFileModal()">Cancel</button>
+      <button class="btn-run" onclick="processFiles()"><span class="spin" id="fileSpin"></span>⚡ Analyze & Auto-Fill Slides</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── PATCH: Add API key input, AI Files button, and Power BI to topbar ──
+(function(){
+  const controls = document.querySelector('.topbar .controls');
+  
+  // API key
+  const apiWrap = document.createElement('div');
+  apiWrap.className = 'api-wrap';
+  apiWrap.innerHTML = '<div class="api-dot" id="apiDot"></div><input class="api-key-input" type="password" id="apiKey" placeholder="sk-ant-... API key" oninput="onApiKey(this.value)">';
+  controls.insertBefore(apiWrap, controls.firstChild);
+
+  // AI Files button
+  const filesBtn = document.createElement('button');
+  filesBtn.textContent = '📎 AI Files';
+  filesBtn.onclick = () => document.getElementById('fileModal').classList.add('open');
+  controls.insertBefore(filesBtn, controls.querySelector('.redact-toggle'));
+})();
+
+function onApiKey(v) {
+  window._apiKey = v;
+  document.getElementById('apiDot').classList.toggle('on', v.length > 20);
+}
+
+function setStatus(msg, color) {
+  const el = document.getElementById('statusMsg');
+  if(el) { el.textContent = msg; }
+  const dot = document.getElementById('sdot');
+  if(dot) dot.style.background = color || 'var(--green)';
+  if(color !== 'var(--orange)') setTimeout(() => { if(el) el.textContent = 'Ready'; }, 3000);
+}
+
+function updateRdctCount() {
+  const all = sections.flatMap(s => s.slides);
+  const ct = all.filter(s => localStorage.getItem('redact_' + s.id) === 'true').length;
+  const el = document.getElementById('rdctCt');
+  if(el) el.textContent = ct + ' redacted';
+}
+
+// Patch navigateTo to update redact count
+const _origNav = window.navigateTo;
+window.navigateTo = function(id) {
+  _origNav(id);
+  updateRdctCount();
+  // Inject PBI block into every slide that should have one
+  injectPbiIfNeeded(id);
+};
+
+// ── POWER BI embed injector ──
+const PBI_SLIDES = ['design_basis','sched_metrics','disciplines','prof_svcs','staffing','contingency','sensitivity'];
+function injectPbiIfNeeded(id) {
+  if (!PBI_SLIDES.includes(id)) return;
+  setTimeout(() => {
+    const sv = document.getElementById('slideView');
+    if (!sv || sv.querySelector('.pbi-wrap')) return;
+    const pbiId = 'pbi_' + id;
+    const url = localStorage.getItem('pbi_' + id) || '';
+    const frameHTML = url ? `<iframe src="${url}" allowfullscreen></iframe>` : `<div class="pbi-ph">📊 Enter a Power BI embed URL to display live visuals</div>`;
+    const wrap = document.createElement('div');
+    wrap.className = 'pbi-wrap';
+    wrap.innerHTML = `<label>⚡ Power BI Live Embed</label>
+      <div class="pbi-row">
+        <input type="text" placeholder="https://app.powerbi.com/reportEmbed?reportId=..." value="${url}" id="pbi_in_${id}" oninput="localStorage.setItem('pbi_${id}',this.value)">
+        <button onclick="loadPbi('${id}')">Preview</button>
+      </div>
+      <div class="pbi-frame" id="pbi_frame_${id}">${frameHTML}</div>`;
+    sv.querySelector('.slide-card .card-body')?.appendChild(wrap);
+  }, 80);
+}
+
+function loadPbi(id) {
+  const url = document.getElementById('pbi_in_' + id)?.value.trim();
+  if (!url) return;
+  localStorage.setItem('pbi_' + id, url);
+  const f = document.getElementById('pbi_frame_' + id);
+  if (f) f.innerHTML = `<iframe src="${url}" allowfullscreen></iframe>`;
+}
+
+// ── PATCH brain dump buttons to use real AI ──
+const _origMakeBD = window.makeBrainDump;
+window.makeBrainDump = function(slideId) {
+  const val = (localStorage.getItem('bd_' + slideId) || '').replace(/</g,'&lt;');
+  return `<div class="brain-dump" onclick="if(event.target.tagName!=='TEXTAREA'&&event.target.tagName!=='BUTTON')this.classList.toggle('open')">
+    <div class="bd-header">🧠 AI Brain Dump — paste rough notes, AI writes the formal narrative</div>
+    <textarea placeholder="Drop rough notes here — numbers, bullet points, anything. AI converts to formal management narrative." oninput="localStorage.setItem('bd_${slideId}',this.value)">${val}</textarea>
+    <button class="ai-btn" onclick="runAI('${slideId}', this)">
+      <span class="spin" id="sp_${slideId}"></span>⚡ Generate Narrative
+    </button>
+    <div class="ai-result-box" id="air_${slideId}">
+      <div class="air-hdr">✨ AI Generated
+        <div class="air-actions">
+          <button class="air-use" onclick="useAI('${slideId}')">✓ Use This</button>
+          <button class="air-disc" onclick="document.getElementById('air_${slideId}').classList.remove('show')">✕ Discard</button>
+        </div>
+      </div>
+      <div class="air-text" id="airt_${slideId}"></div>
+    </div>
+  </div>`;
+};
+
+// Re-render current slide to pick up patched brain dump
+const _origRender = window.renderSlide;
+window.renderSlide = function(id) {
+  _origRender(id);
+  updateRdctCount();
+  injectPbiIfNeeded(id);
+};
+
+async function runAI(slideId, btn) {
+  const dump = localStorage.getItem('bd_' + slideId) || '';
+  const notes = document.getElementById('estimatorNotes')?.value.trim() || '';
+  if (!dump && !notes) { alert('Please add notes in the Brain Dump or Estimator Notes bar first.'); return; }
+  
+  const sp = document.getElementById('sp_' + slideId);
+  if(sp) sp.classList.add('on');
+  if(btn) btn.disabled = true;
+
+  const allSlides = sections.flatMap(s => s.slides);
+  const sl = allSlides.find(s => s.id === slideId) || { title: slideId, num: '' };
+  const proj = localStorage.getItem('f_project_name') || 'the project';
+  const apiKey = window._apiKey || '';
+
+  const prompt = `You are an expert EPC construction estimator writing content for a formal management estimate review presentation.
+
+Slide: "${sl.title}" (${sl.num})
+Project: ${proj}
+
+Estimator Notes:
+${dump || '(none)'}
+
+General Project Notes:
+${notes || '(none)'}
+
+Write formal, professional narrative for this slide as it would appear in a management review book. Third-person tone. Be specific with any data mentioned. Flag unconfirmed items with [TBD]. 200 words max.`;
+
+  try {
+    let text = '';
+    if (!apiKey) {
+      await new Promise(r => setTimeout(r, 900));
+      text = `[DEMO MODE — Enter API key in top bar to enable real AI]
+
+Based on the provided notes, the ${sl.title} reflects the following basis:
+
+The estimate was developed in accordance with company estimating standards. Quantities were derived from the current 3D model with allowances applied for scope gaps and open items as documented in the AQE register (07.001).
+
+All key assumptions and qualifications are documented. [TBD] — Confirm engineering % complete with discipline leads prior to final issue.`;
+    } else {
+      const res = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 800, messages: [{ role: 'user', content: prompt }] })
+      });
+      const data = await res.json();
+      text = data.content?.map(c => c.text || '').join('') || 'No response received.';
+    }
+    const resultEl = document.getElementById('air_' + slideId);
+    const textEl = document.getElementById('airt_' + slideId);
+    if (resultEl && textEl) { textEl.textContent = text; resultEl.classList.add('show'); }
+    // Make sure brain dump is open
+    btn?.closest('.brain-dump')?.classList.add('open');
+  } catch(e) { alert('AI error: ' + e.message); }
+  if(sp) sp.classList.remove('on');
+  if(btn) btn.disabled = false;
+}
+
+function useAI(id) {
+  const text = document.getElementById('airt_' + id)?.textContent || '';
+  const textareas = document.querySelectorAll('#slideView textarea:not(.brain-dump textarea)');
+  if (textareas.length > 0) { textareas[0].value = text; textareas[0].dispatchEvent(new Event('input')); }
+  document.getElementById('air_' + id)?.classList.remove('show');
+  setStatus('AI narrative applied ✓');
+}
+
+// ── ESTIMATOR NOTES ──
+function applyNotesTo(ids) {
+  const notes = document.getElementById('estimatorNotes')?.value.trim();
+  if (!notes) { alert('Please add notes to the Estimator Notes bar first.'); return; }
+  let ct = 0;
+  ids.forEach(id => { if (!localStorage.getItem('bd_' + id)) { localStorage.setItem('bd_' + id, notes); ct++; } });
+  setStatus('Notes applied to ' + ct + ' slides');
+}
+function applyNotesAll() {
+  const notes = document.getElementById('estimatorNotes')?.value.trim();
+  if (!notes) { alert('Please add notes first.'); return; }
+  sections.flatMap(s => s.slides).forEach(sl => { if (!localStorage.getItem('bd_' + sl.id)) localStorage.setItem('bd_' + sl.id, notes); });
+  setStatus('Notes applied to all slides');
+}
+
+// ── FILE MODAL ──
+let uploadedFiles = [];
+function closeFileModal() { document.getElementById('fileModal').classList.remove('open'); }
+function onDrop(e) { e.preventDefault(); document.getElementById('dropZone').classList.remove('over'); Array.from(e.dataTransfer.files).forEach(addFile); }
+function onFileSel(e) { Array.from(e.target.files).forEach(addFile); }
+function addFile(f) {
+  uploadedFiles.push(f);
+  const sz = f.size > 1048576 ? (f.size/1048576).toFixed(1)+'MB' : Math.round(f.size/1024)+'KB';
+  const li = document.createElement('div'); li.className = 'file-item';
+  li.innerHTML = `<span>📄</span><span class="fi-name">${f.name}</span><span class="fi-sz">${sz}</span><span class="fi-ok">✓ Ready</span>`;
+  document.getElementById('fileList').appendChild(li);
+}
+async function processFiles() {
+  if (!uploadedFiles.length) { alert('Please upload at least one file.'); return; }
+  const sp = document.getElementById('fileSpin'); sp.classList.add('on');
+  setStatus('Analyzing documents...', 'var(--orange)');
+  closeFileModal();
+  const apiKey = window._apiKey || '';
+  await new Promise(r => setTimeout(r, 1500));
+  if (!apiKey) { setStatus('Demo: Analysis complete. Add API key for real extraction.'); sp.classList.remove('on'); return; }
+  try {
+    const texts = await Promise.all(uploadedFiles.map(f => f.text().catch(() => '(binary)')));
+    const content = uploadedFiles.map((f,i) => `FILE: ${f.name}\n${texts[i].substring(0,2500)}`).join('\n\n---\n\n');
+    const instr = document.getElementById('extractInstr').value || 'Extract project name, client, location, estimate class, total cost, key risks, and assumptions.';
+    const res = await fetch('https://api.anthropic.com/v1/messages', { method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ model:'claude-sonnet-4-20250514', max_tokens:800,
+        messages:[{role:'user', content: instr + '\n\nDocuments:\n' + content + '\n\nReturn JSON only (no markdown): {"projectName":"","clientName":"","location":"","estClass":"","totalCost":"","keyRisks":"","assumptions":""}'}]})});
+    const data = await res.json();
+    const txt = data.content?.map(c => c.text||'').join('') || '{}';
+    const p = JSON.parse(txt.replace(/```json|```/g,'').trim());
+    if(p.projectName) { localStorage.setItem('f_project_name', p.projectName); updateProjectName(); }
+    if(p.clientName) localStorage.setItem('f_client_name', p.clientName);
+    if(p.location) localStorage.setItem('f_location', p.location);
+    if(p.keyRisks) localStorage.setItem('f_risks', p.keyRisks);
+    if(p.assumptions) localStorage.setItem('f_aqe_0', p.assumptions);
+    setStatus('AI extracted data and populated slides ✓');
+    if(activeSlideId) renderSlide(activeSlideId);
+  } catch(e) { setStatus('Extraction error: ' + e.message); }
+  sp.classList.remove('on');
+}
+
+
+function toggleNotes() {
+  const drawer = document.getElementById('notesDrawer');
+  const btn = document.querySelector('.notes-drawer-btn');
+  const isOpen = drawer.classList.toggle('open');
+  if(btn) btn.classList.toggle('active', isOpen);
+}
+function applyNotesTo(ids) {
+  const notes = document.getElementById('estimatorNotes')?.value.trim();
+  if (!notes) { alert('Please add notes to the Estimator Notes drawer first.'); return; }
+  let ct = 0;
+  ids.forEach(id => { if (!localStorage.getItem('bd_' + id)) { localStorage.setItem('bd_' + id, notes); ct++; } });
+  setStatus('Notes applied to ' + ct + ' slides');
+}
+function applyNotesAll() {
+  const notes = document.getElementById('estimatorNotes')?.value.trim();
+  if (!notes) { alert('Please add notes first.'); return; }
+  sections.flatMap(s => s.slides).forEach(sl => { if (!localStorage.getItem('bd_' + sl.id)) localStorage.setItem('bd_' + sl.id, notes); });
+  setStatus('Notes applied to all slides');
+  document.getElementById('notesDrawer').classList.remove('open');
+  document.querySelector('.notes-drawer-btn')?.classList.remove('active');
+}
+
+// Initial count
+updateRdctCount();
+</script>
+
+
+<!-- ESTIMATOR NOTES DRAWER -->
+<div class="notes-drawer" id="notesDrawer">
+  <div class="nd-hdr">
+    <span style="font-size:16px;">⚡</span>
+    <span class="nd-hdr-title">Estimator Notes</span>
+    <button class="nd-close" onclick="toggleNotes()">✕</button>
+  </div>
+  <div class="nd-body">
+    <textarea class="nd-ta" id="estimatorNotes" placeholder="Brain dump everything here — project details, cost drivers, schedule constraints, scope notes, open items, risks, assumptions, rough numbers...&#10;&#10;AI will pull from these notes when you hit ⚡ Generate on any slide. Use the buttons on the right to push your notes into specific sections."></textarea>
+    <div class="nd-side">
+      <div class="nd-side-lbl">Apply Notes To</div>
+      <button class="nd-btn" onclick="applyNotesTo(['proj_data','est_basis','risks_opps'])">→ Project Overview</button>
+      <button class="nd-btn" onclick="applyNotesTo(['est_general','disciplines','est_scas'])">→ Estimate Basis</button>
+      <button class="nd-btn" onclick="applyNotesTo(['hl_summary','exec_cost','sensitivity'])">→ Cost Sections</button>
+      <button class="nd-btn" onclick="applyNotesTo(['sched_basis','sched_metrics','sched_l1'])">→ Schedule</button>
+      <button class="nd-btn" onclick="applyNotesTo(['risks_opps','contingency','risk_assess','aqe'])">→ Risk & AQE</button>
+      <button class="nd-btn" onclick="applyNotesTo(['unit_rates','labor_strategy','indirects','prof_svcs'])">→ Construction</button>
+      <button class="nd-btn" onclick="applyNotesTo(['exec_plan','exec_cost','currency'])">→ Execution</button>
+    </div>
+  </div>
+  <div class="nd-footer">
+    <button class="nd-apply-all" onclick="applyNotesAll()">⚡ Apply to All Slides</button>
+  </div>
+</div>
+
+
+<script>
+// ══════════════════════════════════════
+//  MODULAR BLOCK SYSTEM
+// ══════════════════════════════════════
+
+let _blockTarget = null; // which slide's block container to add to
+let _pendingShapeTarget = null;
+let _pendingShapeColor = '#1E2D38';
+
+const SHAPES = {
+  callouts: ['💬','📢','📣','🔔','⚠️','🚨','📌','📍','🏷️','🎯','💡','🔑'],
+  flow:     ['➡️','⬆️','🔄','🔃','↩️','🔁','⏩','▶️','⏸️','⏭️','🔀','🔂'],
+  status:   ['✅','❌','⭕','🔴','🟡','🟢','🔵','🟠','🟣','⚫','⚪','🔷']
+};
+
+const SHAPE_COLORS = ['#1E2D38','#E8290B','#0078D4','#00A3A1','#10B981','#F59E0B','#8B5CF6','#EC4899','#64748B','#fff'];
+
+function initShapePicker() {
+  const grids = { shapeGridCallouts: SHAPES.callouts, shapeGridFlow: SHAPES.flow, shapeGridStatus: SHAPES.status };
+  Object.entries(grids).forEach(([id, shapes]) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.innerHTML = shapes.map(s => `<div class="shape-opt" onclick="selectShape('${s}', this)">${s}</div>`).join('');
+  });
+  const colorRow = document.getElementById('shapeColors');
+  if (colorRow) {
+    colorRow.innerHTML = SHAPE_COLORS.map(c =>
+      `<div class="shape-color${c==='#1E2D38'?' active':''}" style="background:${c};${c==='#fff'?'border:1px solid #ddd':''}" onclick="selectShapeColor('${c}', this)" title="${c}"></div>`
+    ).join('') + `<input type="color" id="customShapeColor" style="width:22px;height:22px;border-radius:50%;border:2px solid #ddd;cursor:pointer;padding:0;" onchange="selectShapeColor(this.value,null)">`;
+  }
+}
+
+function selectShape(emoji, el) {
+  document.querySelectorAll('.shape-opt').forEach(e => e.classList.remove('selected'));
+  el.classList.add('selected');
+}
+
+function selectShapeColor(color, el) {
+  _pendingShapeColor = color;
+  document.querySelectorAll('.shape-color').forEach(e => e.classList.remove('active'));
+  if (el) el.classList.add('active');
+}
+
+function confirmShape() {
+  const selected = document.querySelector('.shape-opt.selected');
+  if (!selected || !_pendingShapeTarget) return;
+  const emoji = selected.textContent;
+  const color = _pendingShapeColor;
+  const id = 'blk_' + Date.now();
+
+  const wrap = document.createElement('div');
+  wrap.innerHTML = `
+    <div class="mod-shape-wrap" style="background:${color}20;border-radius:10px;min-height:${color==='#fff'?100:120}px;">
+      <div style="text-align:center;">
+        <div style="font-size:64px;line-height:1;">${emoji}</div>
+        <div contenteditable="true" style="margin-top:8px;font-size:13px;color:${color==='#fff'?'#333':color};font-weight:600;outline:none;min-width:60px;" onclick="event.stopPropagation()">Label</div>
+      </div>
+    </div>`;
+  createBlock(id, wrap.innerHTML, _pendingShapeTarget, 'shape');
+  document.getElementById('shapePicker').style.display = 'none';
+}
+
+function showShapePicker(targetContainer) {
+  _pendingShapeTarget = targetContainer;
+  const picker = document.getElementById('shapePicker');
+  picker.style.display = 'block';
+  const rect = document.getElementById('blockToolbar').getBoundingClientRect();
+  picker.style.top = (rect.top - picker.offsetHeight - 10) + 'px';
+  picker.style.left = '50%';
+  picker.style.transform = 'translateX(-50%)';
+  // Add confirm button if not there
+  if (!picker.querySelector('.sp-confirm')) {
+    const btn = document.createElement('button');
+    btn.className = 'sp-confirm';
+    btn.style.cssText = 'margin-top:12px;width:100%;padding:9px;background:var(--navy);color:#fff;border:none;border-radius:7px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;';
+    btn.textContent = '✓ Insert Shape';
+    btn.onclick = confirmShape;
+    picker.appendChild(btn);
+  }
+}
+
+// ── addBlock: called from toolbar ──
+function addBlock(type) {
+  // Find current slide's block container
+  const container = document.getElementById('blockContainer');
+  if (!container) {
+    // Create one if it doesn't exist
+    const sv = document.getElementById('slideView');
+    const bc = document.createElement('div');
+    bc.id = 'blockContainer';
+    bc.style.marginTop = '20px';
+    sv.appendChild(bc);
+  }
+  const target = document.getElementById('blockContainer');
+  const id = 'blk_' + Date.now();
+
+  if (type === 'shape') { showShapePicker(target); return; }
+
+  let inner = '';
+  if (type === 'text') {
+    inner = `<div class="mod-text-wrap"><textarea rows="4" placeholder="Enter text, narrative, notes..." oninput="saveBlockData('${id}',this.value)">${''}</textarea></div>`;
+  } else if (type === 'table') {
+    inner = buildTableBlock(id, 3, 4);
+  } else if (type === 'image') {
+    inner = buildImageBlock(id);
+  } else if (type === 'file') {
+    inner = buildFileBlock(id);
+  } else if (type === 'pbi') {
+    inner = buildPbiBlock(id);
+  }
+
+  createBlock(id, inner, target, type);
+}
+
+function createBlock(id, innerHtml, container, type) {
+  const block = document.createElement('div');
+  block.className = 'mod-block';
+  block.id = id;
+  block.dataset.type = type;
+  block.draggable = true;
+
+  block.innerHTML = `
+    <div class="block-controls">
+      <span class="bc-btn drag-handle" title="Drag to reorder">⠿</span>
+      <span class="bc-btn" onclick="resizeBlock('${id}','sm')" title="Small">S</span>
+      <span class="bc-btn" onclick="resizeBlock('${id}','md')" title="Medium">M</span>
+      <span class="bc-btn" onclick="resizeBlock('${id}','lg')" title="Full">L</span>
+      <span class="bc-btn" onclick="resizeBlock('${id}','half')" title="Half width">½</span>
+      <span style="width:1px;height:14px;background:rgba(255,255,255,.2);margin:0 2px;display:inline-block;"></span>
+      <span class="bc-btn del" onclick="deleteBlock('${id}')" title="Delete">🗑</span>
+    </div>
+    <div class="block-inner">${innerHtml}</div>
+    <div class="resize-handle" onmousedown="startResize(event,'${id}')"></div>
+  `;
+
+  // Click to select
+  block.addEventListener('click', (e) => {
+    if (e.target.closest('.block-controls') || e.target.closest('.resize-handle')) return;
+    document.querySelectorAll('.mod-block').forEach(b => b.classList.remove('selected'));
+    block.classList.add('selected');
+  });
+
+  // Drag events
+  block.addEventListener('dragstart', onDragStart);
+  block.addEventListener('dragover', onDragOver);
+  block.addEventListener('drop', onBlockDrop);
+  block.addEventListener('dragend', () => {
+    document.querySelectorAll('.mod-block').forEach(b => { b.classList.remove('dragging','drag-over-top','drag-over-bottom'); });
+  });
+
+  container.appendChild(block);
+}
+
+// ── RESIZE ──
+function resizeBlock(id, size) {
+  const block = document.getElementById(id);
+  if (!block) return;
+  const inner = block.querySelector('.block-inner');
+  const sizeMap = { sm: '40%', md: '65%', lg: '100%', half: '50%' };
+  block.style.width = sizeMap[size] || '100%';
+  // If half or sm, allow side-by-side by floating
+  if (size === 'half' || size === 'sm') {
+    block.style.display = 'inline-block';
+    block.style.verticalAlign = 'top';
+    block.style.marginRight = '1%';
+  } else {
+    block.style.display = 'block';
+    block.style.marginRight = '';
+  }
+}
+
+function startResize(e, id) {
+  e.preventDefault();
+  const block = document.getElementById(id);
+  if (!block) return;
+  const startX = e.clientX;
+  const startW = block.getBoundingClientRect().width;
+  const parent = block.parentElement;
+  const parentW = parent.getBoundingClientRect().width;
+
+  function onMove(ev) {
+    const newW = Math.max(150, startW + (ev.clientX - startX));
+    const pct = Math.min(100, Math.round((newW / parentW) * 100));
+    block.style.width = pct + '%';
+    block.style.display = pct < 99 ? 'inline-block' : 'block';
+    block.style.verticalAlign = 'top';
+  }
+  function onUp() {
+    document.removeEventListener('mousemove', onMove);
+    document.removeEventListener('mouseup', onUp);
+  }
+  document.addEventListener('mousemove', onMove);
+  document.addEventListener('mouseup', onUp);
+}
+
+// ── DELETE ──
+function deleteBlock(id) {
+  if (!confirm('Delete this block?')) return;
+  const el = document.getElementById(id);
+  if (el) el.remove();
+}
+
+// ── DRAG REORDER ──
+let _dragSrc = null;
+function onDragStart(e) {
+  _dragSrc = this;
+  this.classList.add('dragging');
+  e.dataTransfer.effectAllowed = 'move';
+}
+function onDragOver(e) {
+  e.preventDefault();
+  if (!_dragSrc || _dragSrc === this) return;
+  const rect = this.getBoundingClientRect();
+  const mid = rect.top + rect.height / 2;
+  document.querySelectorAll('.mod-block').forEach(b => b.classList.remove('drag-over-top','drag-over-bottom'));
+  this.classList.add(e.clientY < mid ? 'drag-over-top' : 'drag-over-bottom');
+}
+function onBlockDrop(e) {
+  e.preventDefault();
+  if (!_dragSrc || _dragSrc === this) return;
+  const rect = this.getBoundingClientRect();
+  const mid = rect.top + rect.height / 2;
+  document.querySelectorAll('.mod-block').forEach(b => b.classList.remove('drag-over-top','drag-over-bottom'));
+  if (e.clientY < mid) {
+    this.parentElement.insertBefore(_dragSrc, this);
+  } else {
+    this.parentElement.insertBefore(_dragSrc, this.nextSibling);
+  }
+  _dragSrc = null;
+}
+
+// ── TABLE BLOCK ──
+function buildTableBlock(id, cols, rows) {
+  let header = '';
+  for (let c = 0; c < cols; c++) header += `<th contenteditable="true">Column ${c+1}</th>`;
+  let body = '';
+  for (let r = 0; r < rows; r++) {
+    body += '<tr>';
+    for (let c = 0; c < cols; c++) body += `<td><input type="text" placeholder="—"></td>`;
+    body += '</tr>';
+  }
+  return `<div class="mod-table-wrap">
+    <table class="mod-table" id="mt_${id}">
+      <thead><tr>${header}</tr></thead>
+      <tbody>${body}</tbody>
+    </table>
+    <div class="tbl-footer">
+      <button class="tbl-btn" onclick="addTableRow('mt_${id}')">+ Row</button>
+      <button class="tbl-btn" onclick="addTableCol('mt_${id}')">+ Column</button>
+      <button class="tbl-btn" onclick="removeTableRow('mt_${id}')">– Row</button>
+    </div>
+  </div>`;
+}
+function addTableRow(tblId) {
+  const tbl = document.getElementById(tblId);
+  if (!tbl) return;
+  const cols = tbl.querySelector('thead tr').cells.length;
+  const tr = tbl.querySelector('tbody').insertRow();
+  for (let i = 0; i < cols; i++) {
+    const td = tr.insertCell();
+    td.innerHTML = `<input type="text" placeholder="—">`;
+  }
+}
+function removeTableRow(tblId) {
+  const tbl = document.getElementById(tblId);
+  const tbody = tbl?.querySelector('tbody');
+  if (tbody && tbody.rows.length > 1) tbody.deleteRow(tbody.rows.length - 1);
+}
+function addTableCol(tblId) {
+  const tbl = document.getElementById(tblId);
+  if (!tbl) return;
+  const th = document.createElement('th');
+  th.contentEditable = 'true';
+  th.textContent = 'Column';
+  tbl.querySelector('thead tr').appendChild(th);
+  tbl.querySelectorAll('tbody tr').forEach(tr => {
+    const td = tr.insertCell();
+    td.innerHTML = `<input type="text" placeholder="—">`;
+  });
+}
+
+// ── IMAGE BLOCK ──
+function buildImageBlock(id) {
+  return `<div class="mod-img-wrap" id="imgwrap_${id}" onclick="triggerImgUpload('${id}')">
+    <input type="file" id="imgfile_${id}" style="display:none" accept="image/*" onchange="loadBlockImage('${id}',this)">
+    <div class="img-placeholder"><div class="ico">🖼️</div><p>Click to upload image or screenshot</p></div>
+  </div>`;
+}
+function triggerImgUpload(id) { document.getElementById('imgfile_' + id)?.click(); }
+function loadBlockImage(id, input) {
+  const f = input.files[0]; if (!f) return;
+  const r = new FileReader();
+  r.onload = e => {
+    const wrap = document.getElementById('imgwrap_' + id);
+    if (wrap) {
+      wrap.innerHTML = `<input type="file" id="imgfile_${id}" style="display:none" accept="image/*" onchange="loadBlockImage('${id}',this)"><img src="${e.target.result}" alt="uploaded">`;
+      wrap.classList.add('has-image');
+      wrap.onclick = () => document.getElementById('imgfile_' + id)?.click();
+    }
+  };
+  r.readAsDataURL(f);
+}
+
+// ── FILE UPLOAD BLOCK ──
+function buildFileBlock(id) {
+  return `<div class="mod-file-wrap">
+    <div class="mod-file-drop" id="fdrop_${id}"
+      ondrop="handleFileBlockDrop(event,'${id}')" 
+      ondragover="event.preventDefault();this.classList.add('over')"
+      ondragleave="this.classList.remove('over')"
+      onclick="document.getElementById('fbinput_${id}').click()">
+      <div class="dico">📎</div>
+      <p><strong>Click to browse</strong> or drag files here</p>
+    </div>
+    <input type="file" id="fbinput_${id}" style="display:none" multiple onchange="handleFileBlockSelect(event,'${id}')">
+    <div class="mod-file-list" id="flist_${id}"></div>
+  </div>`;
+}
+function handleFileBlockDrop(e, id) {
+  e.preventDefault();
+  document.getElementById('fdrop_' + id)?.classList.remove('over');
+  Array.from(e.dataTransfer.files).forEach(f => addFileToBlock(f, id));
+}
+function handleFileBlockSelect(e, id) {
+  Array.from(e.target.files).forEach(f => addFileToBlock(f, id));
+}
+function addFileToBlock(f, id) {
+  const list = document.getElementById('flist_' + id);
+  if (!list) return;
+  const sz = f.size > 1048576 ? (f.size/1048576).toFixed(1)+'MB' : Math.round(f.size/1024)+'KB';
+  const item = document.createElement('div');
+  item.className = 'mod-file-item';
+  item.innerHTML = `<span>📄</span><span class="fn">${f.name}</span><span class="fs">${sz}</span><button class="fx" onclick="this.parentElement.remove()">✕</button>`;
+  list.appendChild(item);
+}
+
+// ── POWER BI BLOCK ──
+function buildPbiBlock(id) {
+  return `<div class="mod-pbi-wrap">
+    <div style="font-size:11px;font-weight:700;color:var(--navy);margin-bottom:8px;letter-spacing:.3px;">⚡ POWER BI LIVE EMBED</div>
+    <div class="pbi-input-row">
+      <input type="text" id="pbiurl_${id}" placeholder="https://app.powerbi.com/reportEmbed?reportId=...">
+      <button onclick="loadBlockPbi('${id}')">▶ Preview</button>
+    </div>
+    <div class="pbi-embed-frame" id="pbiframe_${id}" style="min-height:200px;">
+      <div class="pbi-embed-ph">📊 Paste a Power BI embed URL above and click Preview</div>
+    </div>
+  </div>`;
+}
+function loadBlockPbi(id) {
+  const url = document.getElementById('pbiurl_' + id)?.value.trim();
+  if (!url) return;
+  const frame = document.getElementById('pbiframe_' + id);
+  if (frame) frame.innerHTML = `<iframe src="${url}" allowfullscreen style="width:100%;height:280px;border:none;"></iframe>`;
+}
+
+// ── SHOW TOOLBAR when a slide is loaded ──
+const __origNavigateTo = window.navigateTo;
+window.navigateTo = function(id) {
+  __origNavigateTo(id);
+  // Show toolbar
+  document.getElementById('blockToolbar').style.display = 'flex';
+  // Ensure block container exists
+  setTimeout(() => {
+    if (!document.getElementById('blockContainer')) {
+      const sv = document.getElementById('slideView');
+      const bc = document.createElement('div');
+      bc.id = 'blockContainer';
+      bc.style.marginTop = '20px';
+      sv.appendChild(bc);
+    }
+  }, 120);
+};
+
+// Click outside blocks to deselect
+document.addEventListener('click', (e) => {
+  if (!e.target.closest('.mod-block') && !e.target.closest('.block-toolbar') && !e.target.closest('.shape-popup')) {
+    document.querySelectorAll('.mod-block').forEach(b => b.classList.remove('selected'));
+  }
+});
+
+// Init shape picker
+initShapePicker();
+</script>
+
+</body>
+</html>
