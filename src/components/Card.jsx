@@ -7,8 +7,13 @@ import Assignee from './Assignee.jsx';
 const SIZE_MAP = { sm: '40%', md: '65%', half: '50%', lg: '100%' };
 
 export default function Card({ slideId, title, num, children, onRedactChange }) {
-  const [deleted, setDeleted] = useLocalStorageBool('sec_del_' + slideId, false);
+  const [deleted, setDeletedRaw] = useLocalStorageBool('sec_del_' + slideId, false);
   const [size, setSize] = useLocalStorage('sec_size_' + slideId, 'lg');
+
+  function setDeleted(v) {
+    setDeletedRaw(v);
+    window.dispatchEvent(new Event('drift-state-change'));
+  }
 
   // Pre-read: defaults from template, can be overridden via checkbox.
   const slide = allSlides.find(s => s.id === slideId);

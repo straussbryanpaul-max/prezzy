@@ -84,16 +84,16 @@ export default function Sidebar({
                       data-redact-version={redactVersion}
                       data-preread-version={preReadVersion}
                       onClick={() => onNavigate(sl.id)}
+                      title={`${sl.num} — ${sl.title}`}
                     >
-                      <span>{sl.num}</span> {sl.title}
-                      <span className="sidebar-badges">
-                        {preread && (
-                          <span className="badge chip chip-preread">PRE-READ</span>
-                        )}
-                        {redacted && (
-                          <span className="badge">🔒</span>
-                        )}
-                      </span>
+                      <span className="slide-item-num">{sl.num}</span>
+                      <span className="slide-item-title">{sl.title}</span>
+                      {preread && (
+                        <span className="badge chip chip-preread" title="Pre-Read Only">PRE</span>
+                      )}
+                      {redacted && (
+                        <span className="badge" title="Redacted">🔒</span>
+                      )}
                     </div>
                   );
                 })}

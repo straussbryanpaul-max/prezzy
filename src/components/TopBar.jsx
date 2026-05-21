@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
-import { lsGet, lsSet } from '../hooks/useLocalStorage.js';
+import { lsGet } from '../hooks/useLocalStorage.js';
 import { getCurrentTemplateName } from '../services/templates.js';
+import { computeDrift } from '../services/drift.js';
 
 export default function TopBar({
   projectName,
@@ -11,24 +12,32 @@ export default function TopBar({
   onPrint,
   onOpenStatus,
   onPresent,
+  onOpenDrift,
 }) {
-  const [apiKey, setApiKey] = useState(() => lsGet('apiKey', ''));
   const [templateName, setTemplateName] = useState(() => getCurrentTemplateName());
+  const [driftCount, setDriftCount] = useState(0);
 
+  // Make API key available globally (sourced from localStorage if a developer
+  // wires it in elsewhere, e.g. server-injected before SSR or a backend proxy).
   useEffect(() => {
-    window._apiKey = apiKey;
-  }, [apiKey]);
-
-  useEffect(() => {
-    const refresh = () => setTemplateName(getCurrentTemplateName());
-    window.addEventListener('current-template-change', refresh);
-    return () => window.removeEventListener('current-template-change', refresh);
+    window._apiKey = lsGet('apiKey', '');
   }, []);
 
-  function onApiKeyChange(v) {
-    setApiKey(v);
-    lsSet('apiKey', v);
-  }
+  useEffect(() => {
+    const refresh = () => {
+      setTemplateName(getCurrentTemplateName());
+      setDriftCount(computeDrift().totalChanges);
+    };
+    refresh();
+    window.addEventListener('current-template-change', refresh);
+    window.addEventListener('drift-state-change', refresh);
+    const t = setInterval(refresh, 2500);
+    return () => {
+      window.removeEventListener('current-template-change', refresh);
+      window.removeEventListener('drift-state-change', refresh);
+      clearInterval(t);
+    };
+  }, []);
 
   return (
     <div className="topbar">
@@ -37,27 +46,21 @@ export default function TopBar({
       </div>
       <div className="project-name">
         {projectName || 'No Project Selected'}
-        {templateName ? (
-          <span className="template-tag" title="Loaded template">
-            📑 {templateName}
-          </span>
-        ) : (
-          <span className="template-tag template-tag-none" title="No template loaded — using the default starting layout">
-            📑 No template (default)
-          </span>
-        )}
+        <button
+          type="button"
+          className={`template-tag${templateName ? '' : ' template-tag-none'}${driftCount > 0 ? ' template-tag-dirty' : ''}`}
+          onClick={onOpenDrift}
+          title="Click to see what's changed from the baseline"
+        >
+          <span>📑 {templateName || 'No template (default)'}</span>
+          {driftCount > 0 ? (
+            <span className="template-tag-changes">⚠ {driftCount} change{driftCount !== 1 ? 's' : ''}</span>
+          ) : templateName ? (
+            <span className="template-tag-clean">✓ clean</span>
+          ) : null}
+        </button>
       </div>
       <div className="controls">
-        <div className="api-wrap">
-          <div className={`api-dot${apiKey.length > 20 ? ' on' : ''}`} />
-          <input
-            className="api-key-input"
-            type="password"
-            placeholder="sk-ant-... API key"
-            value={apiKey}
-            onChange={e => onApiKeyChange(e.target.value)}
-          />
-        </div>
         <button onClick={onToggleAI}>🤖 AI</button>
         <button onClick={onOpenStatus}>📊 Status</button>
         <button onClick={onPresent}>▶ Present</button>

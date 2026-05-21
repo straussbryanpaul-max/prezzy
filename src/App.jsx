@@ -7,6 +7,7 @@ import TemplateManager from './components/TemplateManager.jsx';
 import PrintView from './components/PrintView.jsx';
 import StatusView from './components/StatusView.jsx';
 import PresentationView from './components/PresentationView.jsx';
+import DriftView from './components/DriftView.jsx';
 import BlockToolbar from './components/blocks/BlockToolbar.jsx';
 import BlockContainer from './components/blocks/BlockContainer.jsx';
 import ShapePicker from './components/blocks/ShapePicker.jsx';
@@ -32,6 +33,7 @@ export default function App() {
   const [printMode, setPrintMode] = useState(false);
   const [statusOpen, setStatusOpen] = useState(false);
   const [presentMode, setPresentMode] = useState(false);
+  const [driftOpen, setDriftOpen] = useState(false);
 
   const { blocks, add, update, remove, resize, reorder, breakOut } = useBlocks(activeSlideId);
   const [customSlidesVersion, setCustomSlidesVersion] = useState(0);
@@ -168,6 +170,7 @@ export default function App() {
         onPrint={() => setPrintMode(true)}
         onOpenStatus={() => setStatusOpen(true)}
         onPresent={() => setPresentMode(true)}
+        onOpenDrift={() => setDriftOpen(true)}
       />
       {printMode && (
         <PrintView showRedacted={showRedacted} onAfterPrint={() => setPrintMode(false)} />
@@ -217,6 +220,7 @@ export default function App() {
       <AIPanel open={aiOpen} onClose={() => setAIOpen(false)} onStatus={setStatus} />
       <TemplateManager open={templatesOpen} onClose={() => setTemplatesOpen(false)} onStatus={setStatus} />
       <StatusView open={statusOpen} onClose={() => setStatusOpen(false)} onNavigate={navigate} />
+      <DriftView open={driftOpen} onClose={() => setDriftOpen(false)} onNavigate={navigate} />
       {presentMode && (
         <PresentationView
           initialSlideId={activeSlideId}

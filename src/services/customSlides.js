@@ -33,6 +33,7 @@ export function createCustomSlide(title) {
   });
   writeCustomSlides(list);
   window.dispatchEvent(new Event('custom-slides-change'));
+  window.dispatchEvent(new Event('drift-state-change'));
   return id;
 }
 
@@ -49,6 +50,7 @@ export function renameCustomSlide(slideId, newTitle) {
   list[i] = { ...list[i], title: trimmed };
   writeCustomSlides(list);
   window.dispatchEvent(new Event('custom-slides-change'));
+  window.dispatchEvent(new Event('drift-state-change'));
 }
 
 export function deleteCustomSlide(slideId) {
@@ -69,4 +71,5 @@ export function deleteCustomSlide(slideId) {
     window.localStorage.removeItem(p + slideId);
   }
   window.dispatchEvent(new Event('custom-slides-change'));
+  window.dispatchEvent(new Event('drift-state-change'));
 }

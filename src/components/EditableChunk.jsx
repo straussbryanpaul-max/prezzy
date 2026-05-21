@@ -3,8 +3,13 @@ import { useLocalStorage, useLocalStorageBool } from '../hooks/useLocalStorage.j
 const SIZE_MAP = { sm: '40%', md: '65%', half: '50%', lg: '100%' };
 
 export default function EditableChunk({ id, label, children }) {
-  const [deleted, setDeleted] = useLocalStorageBool('chunk_del_' + id, false);
+  const [deleted, setDeletedRaw] = useLocalStorageBool('chunk_del_' + id, false);
   const [size, setSize] = useLocalStorage('chunk_size_' + id, 'lg');
+
+  function setDeleted(v) {
+    setDeletedRaw(v);
+    window.dispatchEvent(new Event('drift-state-change'));
+  }
 
   function breakOut() {
     window.dispatchEvent(
