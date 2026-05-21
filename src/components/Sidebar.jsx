@@ -25,10 +25,25 @@ export default function Sidebar({
 }) {
   const [collapsed, setCollapsed] = useState({});
   const [customSlides, setCustomSlides] = useState(() => getCustomSlides());
+  const [, forceRerender] = useState(0);
 
   useEffect(() => {
     setCustomSlides(getCustomSlides());
   }, [customSlidesVersion]);
+
+  // Listen directly for state-change events so the sidebar reflects them
+  // immediately, regardless of parent prop bumps.
+  useEffect(() => {
+    const bump = () => forceRerender(v => v + 1);
+    window.addEventListener('preread-change', bump);
+    window.addEventListener('assignment-change', bump);
+    window.addEventListener('custom-slides-change', bump);
+    return () => {
+      window.removeEventListener('preread-change', bump);
+      window.removeEventListener('assignment-change', bump);
+      window.removeEventListener('custom-slides-change', bump);
+    };
+  }, []);
 
   function toggleSection(id) {
     setCollapsed(prev => ({ ...prev, [id]: !prev[id] }));
