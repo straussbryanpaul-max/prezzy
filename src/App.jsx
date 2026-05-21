@@ -3,6 +3,7 @@ import TopBar from './components/TopBar.jsx';
 import Sidebar from './components/Sidebar.jsx';
 import StatusBar from './components/StatusBar.jsx';
 import AIPanel from './components/AIPanel.jsx';
+import TemplateManager from './components/TemplateManager.jsx';
 import BlockToolbar from './components/blocks/BlockToolbar.jsx';
 import BlockContainer from './components/blocks/BlockContainer.jsx';
 import ShapePicker from './components/blocks/ShapePicker.jsx';
@@ -24,6 +25,7 @@ export default function App() {
   const [shapePickerOpen, setShapePickerOpen] = useState(false);
   const [toolbarOpen, setToolbarOpen] = useState(true);
   const [sidebarOpen, setSidebarOpen] = useLocalStorageBool('sidebarOpen', true);
+  const [templatesOpen, setTemplatesOpen] = useState(false);
 
   const { blocks, add, update, remove, resize, reorder } = useBlocks(activeSlideId);
 
@@ -116,6 +118,7 @@ export default function App() {
         showRedacted={showRedacted}
         onToggleRedaction={toggleRedaction}
         onToggleAI={() => setAIOpen(o => !o)}
+        onToggleTemplates={() => setTemplatesOpen(o => !o)}
       />
       <Sidebar
         activeSlideId={activeSlideId}
@@ -154,6 +157,7 @@ export default function App() {
         </div>
       </div>
       <AIPanel open={aiOpen} onClose={() => setAIOpen(false)} onStatus={setStatus} />
+      <TemplateManager open={templatesOpen} onClose={() => setTemplatesOpen(false)} onStatus={setStatus} />
       {toolbarOpen ? (
         <BlockToolbar onAdd={addBlock} onClose={() => setToolbarOpen(false)} />
       ) : (
