@@ -258,7 +258,38 @@ body {
 }
 
 /* ============ STATUS VIEW ============ */
-.status-modal { width: 720px; max-height: 88vh; }
+.status-modal { width: 760px; max-height: 92vh; }
+.status-toolbar {
+  display: flex; align-items: center; gap: 6px; margin-top: 12px;
+  padding-top: 10px; border-top: 1px solid var(--gray);
+}
+.status-toolbar-label {
+  font-size: 11px;
+  color: var(--gray3);
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  margin-right: 4px;
+}
+.status-pill {
+  background: #fff;
+  border: 1px solid var(--gray);
+  color: var(--gray3);
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+.status-pill:hover { border-color: var(--blue); color: var(--blue); }
+.status-pill.active { background: var(--navy); color: #fff; border-color: var(--navy); }
+.status-slide-assignee {
+  font-size: 10px;
+  color: var(--teal);
+  margin-right: 12px;
+  white-space: nowrap;
+}
 .status-summary {
   background: var(--light);
   border: 1px solid var(--gray);
@@ -365,17 +396,30 @@ body.presentation-mode { overflow: hidden; }
 .presentation-stage {
   flex: 1;
   overflow-y: auto;
-  display: flex;
-  justify-content: center;
-  padding: 48px 32px 100px;
+  overflow-x: hidden;
+  padding: 36px 48px 110px;
 }
 .presentation-slide-wrap {
   width: 100%;
-  max-width: 1200px;
+  max-width: none;
+  margin: 0 auto;
   background: var(--light);
   border-radius: 12px;
-  padding: 36px;
+  padding: 28px 36px;
   box-shadow: 0 12px 48px rgba(0,0,0,0.5);
+}
+/* Don't let the inner slide-view max-width cap big content in presentation */
+.presentation-slide-wrap .slide-view {
+  max-width: none !important;
+  width: 100% !important;
+}
+/* Tables and images can use the full width */
+.presentation-slide-wrap .data-table,
+.presentation-slide-wrap .img-upload img,
+.presentation-slide-wrap .mod-img-wrap img,
+.presentation-slide-wrap .mod-pbi-wrap,
+.presentation-slide-wrap .pbi-embed-frame {
+  width: 100% !important;
 }
 
 /* Hide editing chrome inside presentation mode */
