@@ -30,10 +30,9 @@ export default function Sidebar({ activeSlideId, showRedacted, onNavigate, redac
               <div className="section-items">
                 {sec.slides.map(sl => {
                   const redacted = sl.redacted || isSlideRedacted(sl.id);
-                  if (!showRedacted && redacted) return null;
                   const cls =
                     (sl.id === activeSlideId ? 'active ' : '') +
-                    (redacted ? 'redacted-item ' : '');
+                    (redacted && !showRedacted ? 'redacted-item ' : '');
                   return (
                     <div
                       key={sl.id}
@@ -42,7 +41,7 @@ export default function Sidebar({ activeSlideId, showRedacted, onNavigate, redac
                       onClick={() => onNavigate(sl.id)}
                     >
                       <span>{sl.num}</span> {sl.title}
-                      {sl.redacted ? (
+                      {redacted ? (
                         <span className="badge">🔒</span>
                       ) : sl.preread ? (
                         <span className="badge chip chip-preread">PRE-READ</span>

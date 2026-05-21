@@ -9,6 +9,7 @@ import BlockToolbar from './components/blocks/BlockToolbar.jsx';
 import BlockContainer from './components/blocks/BlockContainer.jsx';
 import ShapePicker from './components/blocks/ShapePicker.jsx';
 import SlideRouter from './slides/index.jsx';
+import RedactedShroud from './components/RedactedShroud.jsx';
 import { lsGet, useLocalStorageBool } from './hooks/useLocalStorage.js';
 import { useBlocks } from './hooks/useBlocks.js';
 
@@ -24,6 +25,7 @@ export default function App() {
   const [notesOpen, setNotesOpen] = useState(false);
   const [fileOpen, setFileOpen] = useState(false);
   const [shapePickerOpen, setShapePickerOpen] = useState(false);
+  const [toolbarOpen, setToolbarOpen] = useState(true);
 
   const { blocks, add, update, remove, resize, reorder } = useBlocks(activeSlideId);
 
@@ -36,6 +38,39 @@ export default function App() {
       clearInterval(id);
     };
   }, []);
+
+  // Global paste: if clipboard has an image, create an image block on current slide
+  useEffect(() => {
+    function onPaste(e) {
+      // Don't hijack pastes into text inputs/areas
+      const t = e.target;
+      if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) {
+        // Allow normal text paste; but if it has an image alongside, still grab the image
+        const items = e.clipboardData?.items || [];
+        const hasImage = Array.from(items).some(i => i.type.startsWith('image/'));
+        if (!hasImage) return;
+      }
+
+      const items = e.clipboardData?.items || [];
+      for (const item of items) {
+        if (item.type.startsWith('image/')) {
+          e.preventDefault();
+          const file = item.getAsFile();
+          if (!file) continue;
+          const reader = new FileReader();
+          reader.onload = ev => {
+            add('image', { src: ev.target.result });
+            setStatus('📸 Screenshot pasted as new image block');
+          };
+          reader.readAsDataURL(file);
+          break;
+        }
+      }
+    }
+    document.addEventListener('paste', onPaste);
+    return () => document.removeEventListener('paste', onPaste);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [add]);
 
   const navigate = useCallback(id => {
     setActiveSlideId(id);
@@ -89,20 +124,36 @@ export default function App() {
       />
       <div className="main">
         <div className="slide-view">
-          <SlideRouter slideId={activeSlideId} onRedactChange={onRedactChange} />
-          <BlockContainer
-            blocks={blocks}
-            onUpdate={update}
-            onDelete={remove}
-            onResize={resize}
-            onReorder={reorder}
-          />
+          <RedactedShroud
+            slideId={activeSlideId}
+            showRedacted={showRedacted}
+            redactVersion={redactVersion}
+          >
+            <SlideRouter slideId={activeSlideId} onRedactChange={onRedactChange} />
+            <BlockContainer
+              blocks={blocks}
+              onUpdate={update}
+              onDelete={remove}
+              onResize={resize}
+              onReorder={reorder}
+            />
+          </RedactedShroud>
         </div>
       </div>
       <AIPanel open={aiOpen} onClose={() => setAIOpen(false)} />
       <NotesDrawer open={notesOpen} onClose={() => setNotesOpen(false)} onStatus={setStatus} />
       <FileModal open={fileOpen} onClose={() => setFileOpen(false)} onStatus={setStatus} />
-      <BlockToolbar onAdd={addBlock} onClose={() => {}} />
+      {toolbarOpen ? (
+        <BlockToolbar onAdd={addBlock} onClose={() => setToolbarOpen(false)} />
+      ) : (
+        <button
+          className="block-toolbar-reopen"
+          onClick={() => setToolbarOpen(true)}
+          title="Show Add Block toolbar"
+        >
+          ＋
+        </button>
+      )}
       <ShapePicker
         open={shapePickerOpen}
         onCancel={() => setShapePickerOpen(false)}

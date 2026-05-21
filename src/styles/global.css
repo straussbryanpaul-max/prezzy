@@ -402,6 +402,29 @@ body {
   box-shadow: 0 4px 24px rgba(0,0,0,.45), 0 0 0 4px rgba(232,41,11,.15);
   z-index: 2500;
 }
+.block-toolbar-reopen {
+  position: fixed;
+  bottom: 40px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--navy);
+  border: 2px solid var(--red);
+  color: #fff;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  font-size: 24px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 4px 24px rgba(0,0,0,.45), 0 0 0 4px rgba(232,41,11,.15);
+  z-index: 2500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  font-family: inherit;
+}
+.block-toolbar-reopen:hover { background: var(--blue); border-color: var(--blue); }
 .block-toolbar-label {
   font-size: 10px; font-weight: 700; letter-spacing: 1px;
   color: rgba(255,255,255,.4); text-transform: uppercase;
@@ -721,4 +744,46 @@ body {
   cursor: pointer;
   font-family: inherit;
   pointer-events: none;
+}
+
+/* ============ REDACTED SHROUD ============ */
+.redacted-wrap { position: relative; }
+.redacted-wrap.redacted-on > *:not(.redacted-shroud) {
+  filter: blur(3px);
+  pointer-events: none;
+  user-select: none;
+}
+.redacted-shroud {
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    45deg,
+    rgba(232, 41, 11, 0.08),
+    rgba(232, 41, 11, 0.08) 12px,
+    rgba(232, 41, 11, 0.02) 12px,
+    rgba(232, 41, 11, 0.02) 24px
+  );
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  z-index: 5;
+  border-radius: var(--radius);
+  border: 2px dashed rgba(232, 41, 11, 0.35);
+}
+.redacted-shroud-text {
+  font-size: 64px;
+  font-weight: 900;
+  color: rgba(232, 41, 11, 0.55);
+  letter-spacing: 12px;
+  text-shadow: 0 2px 8px rgba(255,255,255,0.6);
+}
+.redacted-shroud-sub {
+  font-size: 12px;
+  color: rgba(232, 41, 11, 0.7);
+  background: rgba(255,255,255,0.85);
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-weight: 600;
 }
