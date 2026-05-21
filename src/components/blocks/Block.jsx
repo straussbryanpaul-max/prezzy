@@ -46,11 +46,11 @@ export default function Block({
         <span className="bc-btn" onClick={() => onResize(block.id, 'half')} title="Half width">½</span>
         <span style={{ width: 1, height: 14, background: 'rgba(255,255,255,.2)', margin: '0 2px', display: 'inline-block' }}></span>
         <span
-          className="bc-btn"
+          className="bc-btn bc-breakout"
           onClick={() => onBreakOut?.(block.id)}
           title="Break out into its own numbered slide"
         >
-          ↗
+          ↗ Break out
         </span>
         <span className="bc-btn del" onClick={() => onDelete(block.id)} title="Delete">🗑</span>
       </div>
