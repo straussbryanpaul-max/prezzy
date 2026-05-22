@@ -8,6 +8,11 @@ import PrintView from './components/PrintView.jsx';
 import StatusView from './components/StatusView.jsx';
 import PresentationView from './components/PresentationView.jsx';
 import DriftView from './components/DriftView.jsx';
+import ReferencesDrawer from './components/ReferencesDrawer.jsx';
+import ReferencesLibrary from './components/ReferencesLibrary.jsx';
+import { saveDeckAsReferences } from './services/references.js';
+import { allSlides } from './data/sections.js';
+import { findCustomSlide } from './services/customSlides.js';
 import BlockToolbar from './components/blocks/BlockToolbar.jsx';
 import BlockContainer from './components/blocks/BlockContainer.jsx';
 import ShapePicker from './components/blocks/ShapePicker.jsx';
@@ -34,6 +39,8 @@ export default function App() {
   const [statusOpen, setStatusOpen] = useState(false);
   const [presentMode, setPresentMode] = useState(false);
   const [driftOpen, setDriftOpen] = useState(false);
+  const [refsDrawerOpen, setRefsDrawerOpen] = useState(false);
+  const [libraryOpen, setLibraryOpen] = useState(false);
 
   const { blocks, add, update, remove, resize, reorder, breakOut } = useBlocks(activeSlideId);
   const [customSlidesVersion, setCustomSlidesVersion] = useState(0);
@@ -159,6 +166,25 @@ export default function App() {
     setShapePickerOpen(false);
   }
 
+  function onSaveDeck() {
+    const label = window.prompt(
+      'Save this deck to the references library as:',
+      `${projectName || 'Deck'} — ${new Date().toLocaleDateString()}`
+    );
+    if (!label) return;
+    const count = saveDeckAsReferences(label);
+    if (count === 0) {
+      setStatus('Nothing to save — no slides have blocks yet', 'var(--orange)');
+    } else {
+      setStatus(`✓ Saved ${count} slide${count !== 1 ? 's' : ''} to references library`);
+    }
+  }
+
+  const activeSlideTitle =
+    allSlides.find(s => s.id === activeSlideId)?.title ||
+    findCustomSlide(activeSlideId)?.title ||
+    activeSlideId;
+
   return (
     <>
       <TopBar
@@ -171,6 +197,9 @@ export default function App() {
         onOpenStatus={() => setStatusOpen(true)}
         onPresent={() => setPresentMode(true)}
         onOpenDrift={() => setDriftOpen(true)}
+        onToggleRefs={() => setRefsDrawerOpen(o => !o)}
+        onOpenLibrary={() => setLibraryOpen(true)}
+        onSaveDeck={onSaveDeck}
       />
       {printMode && (
         <PrintView showRedacted={showRedacted} onAfterPrint={() => setPrintMode(false)} />
@@ -221,6 +250,19 @@ export default function App() {
       <TemplateManager open={templatesOpen} onClose={() => setTemplatesOpen(false)} onStatus={setStatus} />
       <StatusView open={statusOpen} onClose={() => setStatusOpen(false)} onNavigate={navigate} />
       <DriftView open={driftOpen} onClose={() => setDriftOpen(false)} onNavigate={navigate} />
+      <ReferencesDrawer
+        open={refsDrawerOpen}
+        onClose={() => setRefsDrawerOpen(false)}
+        slideId={activeSlideId}
+        slideTitle={activeSlideTitle}
+        onStatus={setStatus}
+      />
+      <ReferencesLibrary
+        open={libraryOpen}
+        onClose={() => setLibraryOpen(false)}
+        onStatus={setStatus}
+        onNavigate={navigate}
+      />
       {presentMode && (
         <PresentationView
           initialSlideId={activeSlideId}

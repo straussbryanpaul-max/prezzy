@@ -13,6 +13,9 @@ export default function TopBar({
   onOpenStatus,
   onPresent,
   onOpenDrift,
+  onToggleRefs,
+  onOpenLibrary,
+  onSaveDeck,
 }) {
   const [templateName, setTemplateName] = useState(() => getCurrentTemplateName());
   const [driftCount, setDriftCount] = useState(0);
@@ -65,6 +68,9 @@ export default function TopBar({
         <button onClick={onOpenStatus}>📊 Status</button>
         <button onClick={onPresent}>▶ Present</button>
         <button onClick={onToggleTemplates}>📑 Templates</button>
+        <button onClick={onToggleRefs} title="Past examples for this slide">🗂 References</button>
+        <button onClick={onOpenLibrary} title="Browse the full references library">📚 Library</button>
+        <button onClick={onSaveDeck} title="Snapshot this deck into the references library">💾 Save Deck</button>
         <button
           className={`redact-toggle${showRedacted ? ' active' : ''}`}
           onClick={onToggleRedaction}
