@@ -1589,46 +1589,56 @@ body.presentation-mode { overflow: hidden; }
 .mod-table-wrap { overflow-x: auto; }
 .mod-table { width: 100%; border-collapse: collapse; font-size: 13px; }
 .mod-table th {
-  background: var(--navy); color: #fff; padding: 4px 6px; text-align: left;
+  background: var(--navy); color: #fff; padding: 0; text-align: left;
   font-size: 11px; font-weight: 700; letter-spacing: .3px; min-width: 80px;
   position: relative;
 }
 .mod-table th.mod-table-col-head {
   padding: 0;
-  display: flex; align-items: stretch;
+  position: relative;
 }
 .mod-table-header-input {
-  flex: 1;
+  display: block;
+  width: 100%;
   background: transparent;
   border: none;
   color: #fff;
-  padding: 8px 6px 8px 10px;
+  padding: 9px 28px 9px 12px;
   font-family: inherit;
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.3px;
   outline: none;
-  min-width: 0;
+  box-sizing: border-box;
 }
-.mod-table-header-input:focus { background: rgba(255,255,255,0.1); }
+.mod-table-header-input:focus { background: rgba(255,255,255,0.12); }
 .mod-table-header-input::placeholder { color: rgba(255,255,255,0.4); }
 .mod-table-del-col {
+  position: absolute;
+  top: 50%;
+  right: 4px;
+  transform: translateY(-50%);
   background: none;
   border: none;
-  color: rgba(255,255,255,0.4);
+  color: rgba(255,255,255,0.45);
   cursor: pointer;
-  padding: 0 8px;
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
   font-size: 14px;
   font-family: inherit;
   line-height: 1;
-  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
   transition: var(--transition);
 }
 .mod-table-del-col:hover:not(:disabled) {
   background: var(--red);
   color: #fff;
 }
-.mod-table-del-col:disabled { opacity: 0.25; cursor: not-allowed; }
+.mod-table-del-col:disabled { opacity: 0.2; cursor: not-allowed; }
 
 .mod-table td { padding: 6px 10px; border-bottom: 1px solid var(--gray); vertical-align: top; }
 .mod-table td input {
