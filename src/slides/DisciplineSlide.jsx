@@ -105,8 +105,7 @@ export default function DisciplineSlide({ discipline: d, onRedactChange }) {
 
       <Card slideId={`disc_compare_${d.id}`} title={`${d.name} — Quantity & Historical Comparisons`} num={d.code} onRedactChange={onRedactChange}>
         <Guidance>
-          Comparison of quantities relevant to the discipline and comparable projects. Historical comparison slides are
-          REDACTED by default.
+          Comparison of quantities relevant to the discipline and comparable projects.
         </Guidance>
         <EditableChunk id={`disc_compare_${d.id}:qcomp`} label="Quantity comparison image">
           <FormGroup label="Quantity Comparison (Green & Yellow Tables)" />
@@ -118,9 +117,6 @@ export default function DisciplineSlide({ discipline: d, onRedactChange }) {
             <ImageUpload name={`disc_metric_img_${d.id}`} />
           </div>
         </EditableChunk>
-        <div style={{ marginTop: 16, padding: 12, background: '#FEF3C7', borderRadius: 8, fontSize: 12, color: '#92400E' }}>
-          ⚠️ Historical comparisons below are typically <strong>REDACTED</strong> for general distribution.
-        </div>
         <EditableChunk id={`disc_compare_${d.id}:qhist`} label="Quantity historical comparison">
           <div style={{ marginTop: 12 }}>
             <FormGroup label="Quantity Historical Comparison" />

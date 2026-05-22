@@ -67,7 +67,6 @@ export const sections = [
       { id: 'est_general', title: 'General Quantification & Pricing', num: '03.010', preread: true },
       { id: 'est_scas', title: 'SCAS & Contracting Plan', num: '03.017', preread: true },
       { id: 'est_wbs', title: 'Work Breakdown Structure', num: '03.018', preread: true },
-      { id: 'disciplines', title: 'Discipline Estimate Basis', num: '03.020–100' },
       { id: 'disc_civil', title: 'Civil Estimate Basis', num: '03.020' },
       { id: 'disc_concrete', title: 'Concrete Estimate Basis', num: '03.040' },
       { id: 'disc_steel', title: 'Steel Estimate Basis', num: '03.050' },

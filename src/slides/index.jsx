@@ -30,7 +30,7 @@ import SchedMetrics from './SchedMetrics.jsx';
 import EstGeneral from './EstGeneral.jsx';
 import EstScas from './EstScas.jsx';
 import EstWbs from './EstWbs.jsx';
-import DisciplinesIndex from './DisciplinesIndex.jsx';
+// DisciplinesIndex removed — each discipline now has its own sidebar entry instead
 import WageRates from './WageRates.jsx';
 import Indirects from './Indirects.jsx';
 import ProfSvcs from './ProfSvcs.jsx';
@@ -73,7 +73,6 @@ const COMPONENT_MAP = {
   est_general: EstGeneral,
   est_scas: EstScas,
   est_wbs: EstWbs,
-  disciplines: DisciplinesIndex,
   wage_rates: WageRates,
   indirects: Indirects,
   prof_svcs: ProfSvcs,

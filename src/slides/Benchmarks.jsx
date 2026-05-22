@@ -7,7 +7,7 @@ import { FormGroup, TextArea } from '../components/Field.jsx';
 export default function Benchmarks({ onRedactChange }) {
   return (
     <Card slideId="benchmarks" title="Historical Benchmarks" num="06.005" onRedactChange={onRedactChange}>
-      <Guidance>This slide is typically redacted for pre-read.</Guidance>
+      <Guidance>Document benchmark sources, comparable projects, and any relevant cost or productivity ratios used as reference.</Guidance>
       <EditableChunk id="benchmarks:narr" label="Benchmark Narrative">
         <FormGroup label="Benchmark Narrative">
           <TextArea name="benchmarks_narrative" placeholder="Describe benchmark sources and relevance..." rows={6} />

@@ -7,7 +7,7 @@ import { FormGroup, TextArea } from '../components/Field.jsx';
 export default function Fee({ onRedactChange }) {
   return (
     <Card slideId="fee" title="Fee" num="06.004" onRedactChange={onRedactChange}>
-      <Guidance>Fee is typically excluded from pre-read materials and marked redacted.</Guidance>
+      <Guidance>Describe the fee basis, margin strategy, and any exclusions from the fee scope.</Guidance>
       <EditableChunk id="fee:narr" label="Fee Basis Narrative">
         <FormGroup label="Fee Basis Narrative">
           <TextArea name="fee_narrative" placeholder="Describe fee strategy, margin, and exclusions..." rows={5} />
