@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react';
-import { packageStatus } from '../services/assignments.js';
+import { useEffect, useRef, useState } from 'react';
+import { packageStatus, addKnownAssignee, getKnownAssignees } from '../services/assignments.js';
+import { lsSet } from '../hooks/useLocalStorage.js';
 
 const STATUS_COLORS = {
   complete: '#10B981',
@@ -49,20 +50,72 @@ export default function StatusView({ open, onClose, onNavigate }) {
 
   function renderSlideRow(sl) {
     return (
-      <button
-        key={sl.id}
-        className={`status-slide-row status-${sl.status}`}
-        onClick={() => jumpTo(sl.id)}
-      >
-        <span className="status-dot" style={{ background: STATUS_COLORS[sl.status] }} />
-        <span className="status-slide-num">{sl.num}</span>
-        <span className="status-slide-title">{sl.title}</span>
-        {groupBy === 'flat' && (
-          <span className="status-slide-assignee">
-            {sl.assignee ? `👤 ${sl.assignee}` : '— unassigned'}
-          </span>
-        )}
+      <div key={sl.id} className={`status-slide-row status-${sl.status}`}>
+        <button className="status-slide-jump" onClick={() => jumpTo(sl.id)}>
+          <span className="status-dot" style={{ background: STATUS_COLORS[sl.status] }} />
+          <span className="status-slide-num">{sl.num}</span>
+          <span className="status-slide-title">{sl.title}</span>
+        </button>
+        <InlineAssign slideId={sl.id} current={sl.assignee} />
         <span className="status-slide-status">{STATUS_LABELS[sl.status]}</span>
+      </div>
+    );
+  }
+
+  function InlineAssign({ slideId, current }) {
+    const [editing, setEditing] = useState(false);
+    const [draft, setDraft] = useState(current || '');
+    const [known, setKnown] = useState(() => getKnownAssignees());
+    const inputRef = useRef(null);
+
+    useEffect(() => {
+      if (editing) inputRef.current?.focus();
+    }, [editing]);
+
+    function commit() {
+      const trimmed = draft.trim();
+      lsSet('assignee_' + slideId, trimmed);
+      if (trimmed) addKnownAssignee(trimmed);
+      setKnown(getKnownAssignees());
+      setEditing(false);
+      window.dispatchEvent(new Event('assignment-change'));
+    }
+
+    function cancel() {
+      setDraft(current || '');
+      setEditing(false);
+    }
+
+    if (editing) {
+      return (
+        <span className="status-slide-assign-cell">
+          <input
+            ref={inputRef}
+            className="status-assign-input"
+            list={`status-assignees-${slideId}`}
+            value={draft}
+            onChange={e => setDraft(e.target.value)}
+            onBlur={commit}
+            onKeyDown={e => {
+              if (e.key === 'Enter') { e.preventDefault(); commit(); }
+              if (e.key === 'Escape') { e.preventDefault(); cancel(); }
+            }}
+            placeholder="name…"
+          />
+          <datalist id={`status-assignees-${slideId}`}>
+            {known.map(n => <option key={n} value={n} />)}
+          </datalist>
+        </span>
+      );
+    }
+
+    return (
+      <button
+        className={`status-assign-chip${current ? ' assigned' : ''}`}
+        onClick={() => setEditing(true)}
+        title={current ? `Assigned to ${current} — click to change` : 'Click to assign'}
+      >
+        {current ? `👤 ${current}` : '+ assign'}
       </button>
     );
   }
