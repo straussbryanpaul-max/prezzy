@@ -14,22 +14,101 @@ const STATUS_LABELS = {
   untouched: 'Untouched',
 };
 
+// Top-level component — must NOT be defined inside StatusView or it would
+// be re-created on every parent render and the input would lose focus.
+function InlineAssign({ slideId, current }) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(current || '');
+  const [known, setKnown] = useState(() => getKnownAssignees());
+  const inputRef = useRef(null);
+
+  // Sync draft when current changes from outside (e.g. polling refresh)
+  useEffect(() => {
+    if (!editing) setDraft(current || '');
+  }, [current, editing]);
+
+  useEffect(() => {
+    if (editing) inputRef.current?.focus();
+  }, [editing]);
+
+  function commit() {
+    const trimmed = draft.trim();
+    lsSet('assignee_' + slideId, trimmed);
+    if (trimmed) addKnownAssignee(trimmed);
+    setKnown(getKnownAssignees());
+    setEditing(false);
+    window.dispatchEvent(new Event('assignment-change'));
+  }
+
+  function cancel() {
+    setDraft(current || '');
+    setEditing(false);
+  }
+
+  if (editing) {
+    return (
+      <span className="status-slide-assign-cell">
+        <input
+          ref={inputRef}
+          className="status-assign-input"
+          list={`status-assignees-${slideId}`}
+          value={draft}
+          onChange={e => setDraft(e.target.value)}
+          onBlur={commit}
+          onKeyDown={e => {
+            if (e.key === 'Enter') { e.preventDefault(); commit(); }
+            if (e.key === 'Escape') { e.preventDefault(); cancel(); }
+          }}
+          placeholder="name…"
+        />
+        <datalist id={`status-assignees-${slideId}`}>
+          {known.map(n => <option key={n} value={n} />)}
+        </datalist>
+      </span>
+    );
+  }
+
+  return (
+    <button
+      className={`status-assign-chip${current ? ' assigned' : ''}`}
+      onClick={() => setEditing(true)}
+      title={current ? `Assigned to ${current} — click to change` : 'Click to assign'}
+    >
+      {current ? `👤 ${current}` : '+ assign'}
+    </button>
+  );
+}
+
+function StatusSlideRow({ sl, onJump }) {
+  return (
+    <div className={`status-slide-row status-${sl.status}`}>
+      <button className="status-slide-jump" onClick={() => onJump(sl.id)}>
+        <span className="status-dot" style={{ background: STATUS_COLORS[sl.status] }} />
+        <span className="status-slide-num">{sl.num}</span>
+        <span className="status-slide-title">{sl.title}</span>
+      </button>
+      <InlineAssign slideId={sl.id} current={sl.assignee} />
+      <span className="status-slide-status">{STATUS_LABELS[sl.status]}</span>
+    </div>
+  );
+}
+
 export default function StatusView({ open, onClose, onNavigate }) {
   const [data, setData] = useState(() => packageStatus());
   const [groupBy, setGroupBy] = useState('assignee'); // 'assignee' | 'flat'
 
-  // Refresh status when modal opens or any assignment/completion changes
+  // Refresh status when modal opens or any assignment/completion changes.
+  // Note: we DON'T poll here because polling re-renders would interrupt
+  // any in-progress text input. Events are sufficient.
   useEffect(() => {
     if (!open) return;
     setData(packageStatus());
     const handler = () => setData(packageStatus());
     window.addEventListener('assignment-change', handler);
     window.addEventListener('storage', handler);
-    const tick = setInterval(handler, 1500);
     return () => {
       window.removeEventListener('assignment-change', handler);
       window.removeEventListener('storage', handler);
-      clearInterval(tick);
     };
   }, [open]);
 
@@ -46,78 +125,6 @@ export default function StatusView({ open, onClose, onNavigate }) {
   function jumpTo(slideId) {
     onNavigate?.(slideId);
     onClose();
-  }
-
-  function renderSlideRow(sl) {
-    return (
-      <div key={sl.id} className={`status-slide-row status-${sl.status}`}>
-        <button className="status-slide-jump" onClick={() => jumpTo(sl.id)}>
-          <span className="status-dot" style={{ background: STATUS_COLORS[sl.status] }} />
-          <span className="status-slide-num">{sl.num}</span>
-          <span className="status-slide-title">{sl.title}</span>
-        </button>
-        <InlineAssign slideId={sl.id} current={sl.assignee} />
-        <span className="status-slide-status">{STATUS_LABELS[sl.status]}</span>
-      </div>
-    );
-  }
-
-  function InlineAssign({ slideId, current }) {
-    const [editing, setEditing] = useState(false);
-    const [draft, setDraft] = useState(current || '');
-    const [known, setKnown] = useState(() => getKnownAssignees());
-    const inputRef = useRef(null);
-
-    useEffect(() => {
-      if (editing) inputRef.current?.focus();
-    }, [editing]);
-
-    function commit() {
-      const trimmed = draft.trim();
-      lsSet('assignee_' + slideId, trimmed);
-      if (trimmed) addKnownAssignee(trimmed);
-      setKnown(getKnownAssignees());
-      setEditing(false);
-      window.dispatchEvent(new Event('assignment-change'));
-    }
-
-    function cancel() {
-      setDraft(current || '');
-      setEditing(false);
-    }
-
-    if (editing) {
-      return (
-        <span className="status-slide-assign-cell">
-          <input
-            ref={inputRef}
-            className="status-assign-input"
-            list={`status-assignees-${slideId}`}
-            value={draft}
-            onChange={e => setDraft(e.target.value)}
-            onBlur={commit}
-            onKeyDown={e => {
-              if (e.key === 'Enter') { e.preventDefault(); commit(); }
-              if (e.key === 'Escape') { e.preventDefault(); cancel(); }
-            }}
-            placeholder="name…"
-          />
-          <datalist id={`status-assignees-${slideId}`}>
-            {known.map(n => <option key={n} value={n} />)}
-          </datalist>
-        </span>
-      );
-    }
-
-    return (
-      <button
-        className={`status-assign-chip${current ? ' assigned' : ''}`}
-        onClick={() => setEditing(true)}
-        title={current ? `Assigned to ${current} — click to change` : 'Click to assign'}
-      >
-        {current ? `👤 ${current}` : '+ assign'}
-      </button>
-    );
   }
 
   return (
@@ -167,7 +174,11 @@ export default function StatusView({ open, onClose, onNavigate }) {
                     {stats.slides.length} slides · {stats.complete}✓ · {stats.in_progress}⏳ · {stats.untouched}○
                   </span>
                 </div>
-                <div className="status-group-slides">{stats.slides.map(renderSlideRow)}</div>
+                <div className="status-group-slides">
+                  {stats.slides.map(sl => (
+                    <StatusSlideRow key={sl.id} sl={sl} onJump={jumpTo} />
+                  ))}
+                </div>
               </div>
             ))
           ) : (
@@ -176,7 +187,11 @@ export default function StatusView({ open, onClose, onNavigate }) {
                 <strong>All slides</strong>
                 <span className="status-group-counts">{flatSlides.length} total</span>
               </div>
-              <div className="status-group-slides">{flatSlides.map(renderSlideRow)}</div>
+              <div className="status-group-slides">
+                {flatSlides.map(sl => (
+                  <StatusSlideRow key={sl.id} sl={sl} onJump={jumpTo} />
+                ))}
+              </div>
             </div>
           )}
         </div>

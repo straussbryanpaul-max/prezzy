@@ -1589,15 +1589,81 @@ body.presentation-mode { overflow: hidden; }
 .mod-table-wrap { overflow-x: auto; }
 .mod-table { width: 100%; border-collapse: collapse; font-size: 13px; }
 .mod-table th {
-  background: var(--navy); color: #fff; padding: 9px 12px; text-align: left;
+  background: var(--navy); color: #fff; padding: 4px 6px; text-align: left;
   font-size: 11px; font-weight: 700; letter-spacing: .3px; min-width: 80px;
+  position: relative;
 }
+.mod-table th.mod-table-col-head {
+  padding: 0;
+  display: flex; align-items: stretch;
+}
+.mod-table-header-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: #fff;
+  padding: 8px 6px 8px 10px;
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  outline: none;
+  min-width: 0;
+}
+.mod-table-header-input:focus { background: rgba(255,255,255,0.1); }
+.mod-table-header-input::placeholder { color: rgba(255,255,255,0.4); }
+.mod-table-del-col {
+  background: none;
+  border: none;
+  color: rgba(255,255,255,0.4);
+  cursor: pointer;
+  padding: 0 8px;
+  font-size: 14px;
+  font-family: inherit;
+  line-height: 1;
+  flex-shrink: 0;
+  transition: var(--transition);
+}
+.mod-table-del-col:hover:not(:disabled) {
+  background: var(--red);
+  color: #fff;
+}
+.mod-table-del-col:disabled { opacity: 0.25; cursor: not-allowed; }
+
 .mod-table td { padding: 6px 10px; border-bottom: 1px solid var(--gray); vertical-align: top; }
 .mod-table td input {
   border: 1px solid transparent; background: transparent;
   padding: 4px 6px; width: 100%; font-size: 13px; font-family: inherit;
 }
 .mod-table td input:focus { border-color: var(--blue); background: #fff; outline: none; }
+
+/* Row delete gutter */
+.mod-table-row-gutter {
+  width: 28px;
+  min-width: 28px;
+  padding: 0 !important;
+  background: var(--light);
+  text-align: center;
+  vertical-align: middle;
+}
+thead .mod-table-row-gutter { background: var(--navy); border: none; }
+.mod-table-del-row {
+  background: none;
+  border: none;
+  color: var(--gray2);
+  cursor: pointer;
+  padding: 4px 8px;
+  font-size: 14px;
+  font-family: inherit;
+  line-height: 1;
+  opacity: 0;
+  transition: var(--transition);
+  width: 100%;
+}
+.mod-table tr:hover .mod-table-del-row { opacity: 1; }
+.mod-table-del-row:hover:not(:disabled) { color: var(--red); background: rgba(232,41,11,0.1); }
+.mod-table-del-row:disabled { opacity: 0 !important; cursor: not-allowed; }
+
 .tbl-footer { display: flex; gap: 8px; padding: 8px 0 0; }
 .tbl-btn {
   background: var(--light); border: 1px dashed var(--gray2);

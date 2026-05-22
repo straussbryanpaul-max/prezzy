@@ -13,33 +13,73 @@ export function TextBlock({ block, onUpdate }) {
   );
 }
 
+function defaultHeaders(n) {
+  return Array.from({ length: n }, (_, i) => `Column ${i + 1}`);
+}
+function emptyCells(rows, cols) {
+  return Array.from({ length: rows }, () => Array(cols).fill(''));
+}
+
 export function TableBlock({ block, onUpdate }) {
-  const [rows, setRows] = useState(block.data?.rows || 4);
-  const [cols, setCols] = useState(block.data?.cols || 3);
-  const [headers, setHeaders] = useState(
-    block.data?.headers || Array.from({ length: cols }, (_, i) => `Column ${i + 1}`)
-  );
+  const initRows = block.data?.rows || 4;
+  const initCols = block.data?.cols || 3;
+  const [headers, setHeaders] = useState(block.data?.headers || defaultHeaders(initCols));
+  const [cells, setCells] = useState(block.data?.cells || emptyCells(initRows, initCols));
+
+  function persist(nextHeaders, nextCells) {
+    onUpdate(block.id, {
+      headers: nextHeaders,
+      cells: nextCells,
+      rows: nextCells.length,
+      cols: nextHeaders.length,
+    });
+  }
 
   function addRow() {
-    setRows(r => r + 1);
-    onUpdate(block.id, { rows: rows + 1, cols, headers });
+    const next = [...cells, Array(headers.length).fill('')];
+    setCells(next);
+    persist(headers, next);
   }
-  function removeRow() {
-    if (rows <= 1) return;
-    setRows(r => r - 1);
-    onUpdate(block.id, { rows: rows - 1, cols, headers });
+
+  function removeRow(idx) {
+    if (cells.length <= 1) return;
+    const hasContent = cells[idx]?.some(v => v && v.trim());
+    if (hasContent && !confirm('This row has content. Delete anyway?')) return;
+    const next = cells.filter((_, i) => i !== idx);
+    setCells(next);
+    persist(headers, next);
   }
+
   function addCol() {
-    const next = [...headers, 'Column'];
-    setCols(c => c + 1);
-    setHeaders(next);
-    onUpdate(block.id, { rows, cols: cols + 1, headers: next });
+    const nextHeaders = [...headers, `Column ${headers.length + 1}`];
+    const nextCells = cells.map(row => [...row, '']);
+    setHeaders(nextHeaders);
+    setCells(nextCells);
+    persist(nextHeaders, nextCells);
   }
-  function setHeader(i, v) {
-    const next = [...headers];
-    next[i] = v;
+
+  function removeCol(idx) {
+    if (headers.length <= 1) return;
+    const colHasContent = cells.some(row => row[idx] && row[idx].trim());
+    const headerCustom = headers[idx] && headers[idx] !== `Column ${idx + 1}`;
+    if ((colHasContent || headerCustom) && !confirm(`Delete column "${headers[idx]}"? Its contents will be lost.`)) return;
+    const nextHeaders = headers.filter((_, i) => i !== idx);
+    const nextCells = cells.map(row => row.filter((_, i) => i !== idx));
+    setHeaders(nextHeaders);
+    setCells(nextCells);
+    persist(nextHeaders, nextCells);
+  }
+
+  function setHeader(idx, value) {
+    const next = headers.map((h, i) => (i === idx ? value : h));
     setHeaders(next);
-    onUpdate(block.id, { rows, cols, headers: next });
+    persist(next, cells);
+  }
+
+  function setCell(r, c, value) {
+    const next = cells.map((row, i) => (i === r ? row.map((v, j) => (j === c ? value : v)) : row));
+    setCells(next);
+    persist(headers, next);
   }
 
   return (
@@ -47,24 +87,50 @@ export function TableBlock({ block, onUpdate }) {
       <table className="mod-table">
         <thead>
           <tr>
-            {Array.from({ length: cols }).map((_, c) => (
-              <th
-                key={c}
-                contentEditable
-                suppressContentEditableWarning
-                onBlur={e => setHeader(c, e.target.textContent)}
-              >
-                {headers[c] || `Column ${c + 1}`}
+            <th className="mod-table-row-gutter" />
+            {headers.map((h, c) => (
+              <th key={c} className="mod-table-col-head">
+                <input
+                  className="mod-table-header-input"
+                  type="text"
+                  value={h}
+                  onChange={e => setHeader(c, e.target.value)}
+                />
+                <button
+                  type="button"
+                  className="mod-table-del-col"
+                  onClick={() => removeCol(c)}
+                  disabled={headers.length <= 1}
+                  title={headers.length <= 1 ? 'At least one column required' : 'Delete this column'}
+                >
+                  ×
+                </button>
               </th>
             ))}
           </tr>
         </thead>
         <tbody>
-          {Array.from({ length: rows }).map((_, r) => (
+          {cells.map((row, r) => (
             <tr key={r}>
-              {Array.from({ length: cols }).map((_, c) => (
+              <td className="mod-table-row-gutter">
+                <button
+                  type="button"
+                  className="mod-table-del-row"
+                  onClick={() => removeRow(r)}
+                  disabled={cells.length <= 1}
+                  title={cells.length <= 1 ? 'At least one row required' : 'Delete this row'}
+                >
+                  ×
+                </button>
+              </td>
+              {row.map((cell, c) => (
                 <td key={c}>
-                  <input type="text" placeholder="—" />
+                  <input
+                    type="text"
+                    placeholder="—"
+                    value={cell}
+                    onChange={e => setCell(r, c, e.target.value)}
+                  />
                 </td>
               ))}
             </tr>
@@ -74,7 +140,6 @@ export function TableBlock({ block, onUpdate }) {
       <div className="tbl-footer">
         <button className="tbl-btn" onClick={addRow}>+ Row</button>
         <button className="tbl-btn" onClick={addCol}>+ Column</button>
-        <button className="tbl-btn" onClick={removeRow}>– Row</button>
       </div>
     </div>
   );
