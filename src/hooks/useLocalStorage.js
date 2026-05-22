@@ -10,6 +10,27 @@ export function useLocalStorage(key, initialValue = '') {
     }
   });
 
+  // Pick up external writes (e.g. from AI generators or other tabs)
+  useEffect(() => {
+    function handler(e) {
+      const changedKey = e.detail?.key ?? e.key;
+      if (changedKey !== key) return;
+      try {
+        const item = window.localStorage.getItem(key);
+        setValue(item !== null ? item : initialValue);
+      } catch {
+        // ignore
+      }
+    }
+    window.addEventListener('local-storage-change', handler);
+    window.addEventListener('storage', handler);
+    return () => {
+      window.removeEventListener('local-storage-change', handler);
+      window.removeEventListener('storage', handler);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [key]);
+
   const update = useCallback(
     newVal => {
       setValue(newVal);
@@ -58,4 +79,11 @@ export function lsSet(key, value) {
   } catch {
     // ignore
   }
+}
+
+// Like lsSet but also notifies any useLocalStorage hooks watching this key
+// (within the same tab — the native 'storage' event only fires cross-tab).
+export function lsSetAndNotify(key, value) {
+  lsSet(key, value);
+  window.dispatchEvent(new CustomEvent('local-storage-change', { detail: { key } }));
 }

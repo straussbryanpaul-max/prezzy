@@ -854,6 +854,59 @@ body.presentation-mode { overflow: hidden; }
   font-size: 12px; color: #0369A1; margin-top: 8px; line-height: 1.7;
 }
 
+/* ============ SAFETY GENERATOR ============ */
+.safety-gen {
+  background: linear-gradient(135deg, #FEFCE8, #FEF9C3);
+  border: 1px solid #FDE68A;
+  border-radius: 8px;
+  padding: 14px 18px;
+  margin-bottom: 20px;
+}
+.safety-gen-label {
+  font-size: 13px;
+  font-weight: 700;
+  color: #92400E;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.safety-gen-row {
+  display: flex;
+  gap: 8px;
+}
+.safety-gen-input {
+  flex: 1;
+  padding: 9px 12px;
+  border: 1px solid #FDE68A;
+  border-radius: 6px;
+  font-size: 13px;
+  font-family: inherit;
+  background: #fff;
+}
+.safety-gen-input:focus { outline: none; border-color: var(--orange); }
+.safety-gen-btn {
+  background: linear-gradient(135deg, var(--orange), #b85e00);
+  color: #fff;
+  border: none;
+  padding: 9px 18px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  white-space: nowrap;
+}
+.safety-gen-btn:hover:not(:disabled) { filter: brightness(1.08); }
+.safety-gen-btn:disabled { opacity: 0.6; cursor: wait; }
+.safety-gen-help {
+  font-size: 11px;
+  color: #92400E;
+  margin-top: 8px;
+  line-height: 1.5;
+  opacity: 0.85;
+}
+
 /* ============ AI BRAIN DUMP ============ */
 .brain-dump {
   background: linear-gradient(135deg, #FEFCE8, #FEF9C3);
