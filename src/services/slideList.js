@@ -140,6 +140,38 @@ export function deleteSlideFromList(slideId) {
   persist(computeNums(secs));
 }
 
+export function moveSlide(slideId, direction) {
+  const secs = load() || buildDefault();
+  let fromSecIdx = -1, fromSlideIdx = -1;
+  for (let si = 0; si < secs.length; si++) {
+    const idx = secs[si].slides.findIndex(s => s.id === slideId);
+    if (idx >= 0) { fromSecIdx = si; fromSlideIdx = idx; break; }
+  }
+  if (fromSecIdx < 0) return;
+
+  const [moved] = secs[fromSecIdx].slides.splice(fromSlideIdx, 1);
+
+  if (direction === 'up') {
+    if (fromSlideIdx > 0) {
+      secs[fromSecIdx].slides.splice(fromSlideIdx - 1, 0, moved);
+    } else if (fromSecIdx > 0) {
+      secs[fromSecIdx - 1].slides.push(moved);
+    } else {
+      secs[fromSecIdx].slides.unshift(moved);
+    }
+  } else {
+    if (fromSlideIdx < secs[fromSecIdx].slides.length) {
+      secs[fromSecIdx].slides.splice(fromSlideIdx + 1, 0, moved);
+    } else if (fromSecIdx < secs.length - 1) {
+      secs[fromSecIdx + 1].slides.unshift(moved);
+    } else {
+      secs[fromSecIdx].slides.push(moved);
+    }
+  }
+
+  persist(computeNums(secs));
+}
+
 export function reorderSlide(slideId, targetSectionId, targetIdx) {
   const secs = load() || buildDefault();
 

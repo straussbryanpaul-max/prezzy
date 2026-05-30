@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { lsGet } from '../hooks/useLocalStorage.js';
-import { getSections, addSlide, deleteSlideFromList, reorderSlide, reorderSection, deleteSection, addSection } from '../services/slideList.js';
+import { getSections, addSlide, deleteSlideFromList, moveSlide, reorderSection, deleteSection, addSection } from '../services/slideList.js';
 
 function isSlideRedacted(id) {
   return lsGet('redact_' + id, '') === 'true';
@@ -31,15 +31,10 @@ export default function Sidebar({
   const addInputRef = useRef(null);
   const sectionInputRef = useRef(null);
 
-  // Slide drag state
-  const [dragId, setDragId] = useState(null);
-  const [dropInfo, setDropInfo] = useState(null); // { sectionId, slideId, position }
-  const [dropEmptySec, setDropEmptySec] = useState(null);
-  const dragTypeRef = useRef(null); // 'slide' | 'section' — synchronous, no async state lag
-
   // Section drag state
+  const dragTypeRef = useRef(null);
   const [dragSecId, setDragSecId] = useState(null);
-  const [dropSecInfo, setDropSecInfo] = useState(null); // { sectionId, position }
+  const [dropSecInfo, setDropSecInfo] = useState(null);
 
   function refresh() {
     setSections(getSections());
@@ -88,6 +83,16 @@ export default function Sidebar({
     if (e.key === 'Escape') setAddingTo(null);
   }
 
+  function onDeleteSlide(sl, e) {
+    e.stopPropagation();
+    const label = sl.isCustom
+      ? `Delete "${sl.title}"? This also removes its blocks.`
+      : `Remove "${sl.title}" from this presentation?\n\n(The slide data is not lost.)`;
+    if (!confirm(label)) return;
+    deleteSlideFromList(sl.id);
+    if (sl.id === activeSlideId) onNavigate('cover');
+  }
+
   function onDeleteSection(sec, e) {
     e.stopPropagation();
     const slideCount = sec.slides.length;
@@ -96,56 +101,6 @@ export default function Sidebar({
       : `Delete section "${sec.title}"?`;
     if (!confirm(label)) return;
     deleteSection(sec.id);
-  }
-
-  function onDeleteSlide(sl, e) {
-    e.stopPropagation();
-    const label = sl.isCustom
-      ? `Delete "${sl.title}"? This also removes its blocks.`
-      : `Remove "${sl.title}" from this presentation?\n\n(The slide data is not lost — it can be restored by resetting the slide list.)`;
-    if (!confirm(label)) return;
-    deleteSlideFromList(sl.id);
-    if (sl.id === activeSlideId) onNavigate('cover');
-  }
-
-  // ── Drag handlers ──────────────────────────────────────────────
-  // ── Slide drag ──────────────────────────────────────────────────
-  function onDragStart(e, slideId) {
-    dragTypeRef.current = 'slide';
-    setDragId(slideId);
-    e.dataTransfer.effectAllowed = 'move';
-    e.dataTransfer.setData('text/plain', slideId);
-  }
-
-  function onDragEnd() {
-    dragTypeRef.current = null;
-    setDragId(null);
-    setDropInfo(null);
-    setDropEmptySec(null);
-  }
-
-  function onDragOver(e, sectionId, slideId) {
-    // No stopPropagation — let event bubble to sidebar root as catch-all
-    e.preventDefault();
-    if (dragId === slideId) return;
-    const rect = e.currentTarget.getBoundingClientRect();
-    const position = e.clientY < rect.top + rect.height / 2 ? 'before' : 'after';
-    if (dropInfo?.sectionId !== sectionId || dropInfo?.slideId !== slideId || dropInfo?.position !== position) {
-      setDropInfo({ sectionId, slideId, position });
-    }
-  }
-
-  function onDrop(e, sectionId, slideId) {
-    e.stopPropagation();
-    e.preventDefault();
-    if (!dragId || dragId === slideId) { onDragEnd(); return; }
-    const sec = sections.find(s => s.id === sectionId);
-    if (!sec) { onDragEnd(); return; }
-    let targetIdx = sec.slides.findIndex(s => s.id === slideId);
-    if (targetIdx < 0) { onDragEnd(); return; }
-    if (dropInfo?.position === 'after') targetIdx += 1;
-    reorderSlide(dragId, sectionId, targetIdx);
-    onDragEnd();
   }
 
   // ── Section drag ─────────────────────────────────────────────────
@@ -188,11 +143,7 @@ export default function Sidebar({
   }
 
   return (
-    <div
-      className={`sidebar${open ? '' : ' hidden'}`}
-      onDragOver={e => { if (dragTypeRef.current === 'slide') e.preventDefault(); }}
-      onDrop={e => { if (dragTypeRef.current === 'slide') { e.preventDefault(); onDragEnd(); } }}
-    >
+    <div className={`sidebar${open ? '' : ' hidden'}`}>
       <button className="sidebar-close" onClick={onClose} title="Hide sidebar">◀</button>
 
       {sections.map(sec => {
@@ -204,6 +155,7 @@ export default function Sidebar({
           secDropPos === 'before' ? 'sg-drop-before' : '',
           secDropPos === 'after'  ? 'sg-drop-after'  : '',
         ].filter(Boolean).join(' ');
+
         return (
           <div
             key={sec.id}
@@ -240,36 +192,41 @@ export default function Sidebar({
 
             {!isCollapsed && (
               <div className="section-items">
-                {sec.slides.map(sl => {
+                {sec.slides.map((sl, slIdx) => {
                   const redacted = sl.redacted || isSlideRedacted(sl.id);
                   const preread = isSlidePreRead(sl);
-                  const isDragging = dragId === sl.id;
-                  const dropPos = dropInfo?.sectionId === sec.id && dropInfo?.slideId === sl.id
-                    ? dropInfo.position : null;
                   const cls = [
                     'slide-item',
                     sl.id === activeSlideId ? 'active' : '',
                     redacted && !showRedacted ? 'redacted-item' : '',
-                    isDragging ? 'si-dragging' : '',
-                    dropPos === 'before' ? 'si-drop-before' : '',
-                    dropPos === 'after' ? 'si-drop-after' : '',
                   ].filter(Boolean).join(' ');
+
+                  const isFirst = slIdx === 0 && sections.indexOf(sec) === 0;
+                  const isLast  = slIdx === sec.slides.length - 1 && sections.indexOf(sec) === sections.length - 1;
 
                   return (
                     <div
                       key={sl.id}
                       className={cls}
-                      draggable
                       data-redact-version={redactVersion}
                       data-preread-version={preReadVersion}
-                      onClick={() => !isDragging && onNavigate(sl.id)}
+                      onClick={() => onNavigate(sl.id)}
                       title={`${sl.num} — ${sl.title}`}
-                      onDragStart={e => onDragStart(e, sl.id)}
-                      onDragEnd={onDragEnd}
-                      onDragOver={e => onDragOver(e, sec.id, sl.id)}
-                      onDrop={e => onDrop(e, sec.id, sl.id)}
                     >
-                      <span className="slide-drag-handle">⠿</span>
+                      <div className="slide-move-btns">
+                        <button
+                          className="slide-move-btn"
+                          title="Move up"
+                          disabled={isFirst}
+                          onClick={e => { e.stopPropagation(); moveSlide(sl.id, 'up'); }}
+                        >▲</button>
+                        <button
+                          className="slide-move-btn"
+                          title="Move down"
+                          disabled={isLast}
+                          onClick={e => { e.stopPropagation(); moveSlide(sl.id, 'down'); }}
+                        >▼</button>
+                      </div>
                       <span className="slide-item-num">{sl.num}</span>
                       <span className="slide-item-title">{sl.title}</span>
                       <div className="slide-item-badges">
@@ -285,16 +242,8 @@ export default function Sidebar({
                   );
                 })}
 
-                {/* Drop zone shown when section is empty and a slide is being dragged */}
-                {sec.slides.length === 0 && dragId && (
-                  <div
-                    className={`slide-empty-drop${dropEmptySec === sec.id ? ' active' : ''}`}
-                    onDragOver={e => { if (dragSecId) return; e.preventDefault(); setDropEmptySec(sec.id); }}
-                    onDragLeave={() => setDropEmptySec(null)}
-                    onDrop={e => { e.preventDefault(); reorderSlide(dragId, sec.id, 0); onDragEnd(); }}
-                  >
-                    Drop here
-                  </div>
+                {sec.slides.length === 0 && (
+                  <div className="slide-empty-drop">Empty section</div>
                 )}
 
                 {addingTo === sec.id ? (
@@ -337,7 +286,7 @@ export default function Sidebar({
               onKeyDown={e => {
                 if (e.key === 'Enter') {
                   const t = sectionDraft.trim();
-                  if (t) { addSection(t); setCollapsed(prev => ({ ...prev })); }
+                  if (t) addSection(t);
                   setAddingSection(false); setSectionDraft('');
                 }
                 if (e.key === 'Escape') { setAddingSection(false); setSectionDraft(''); }
