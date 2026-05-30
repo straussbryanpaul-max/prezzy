@@ -16,13 +16,13 @@ function numConfig(sectionTitle) {
 function computeNums(secs) {
   return secs.map(sec => {
     const cfg = numConfig(sec.title);
-    if (!cfg) return sec;
     return {
       ...sec,
-      slides: sec.slides.map((sl, i) => ({
-        ...sl,
-        num: `${cfg.prefix}.${String(cfg.base + i + 1).padStart(3, '0')}`,
-      })),
+      slides: sec.slides.map((sl, i) => {
+        if (sl.fixedNum) return { ...sl, num: sl.fixedNum };
+        if (cfg) return { ...sl, num: `${cfg.prefix}.${String(cfg.base + i + 1).padStart(3, '0')}` };
+        return { ...sl, num: String(i + 1) };
+      }),
     };
   });
 }
@@ -142,6 +142,14 @@ export function reorderSlide(slideId, targetSectionId, targetIdx) {
   targetSec.slides.splice(targetIdx, 0, moved);
 
   persist(computeNums(secs));
+}
+
+export function addSection(title) {
+  const secs = load() || buildDefault();
+  const id = 's_user_' + Date.now().toString(36);
+  secs.push({ id, title: title.trim(), slides: [] });
+  persist(computeNums(secs));
+  return id;
 }
 
 export function updateSlideTitleInList(slideId, newTitle) {

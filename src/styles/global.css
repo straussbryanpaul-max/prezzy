@@ -390,6 +390,19 @@ body {
   font-family: inherit; transition: var(--transition);
 }
 .section-add-slide-btn:hover { background: var(--light); color: var(--teal); }
+
+/* New Section footer */
+.sidebar-new-section {
+  border-top: 2px solid var(--gray);
+  margin-top: 4px;
+}
+.sidebar-new-section-btn {
+  width: 100%; padding: 10px 16px; text-align: left;
+  background: none; border: none;
+  color: var(--gray2); font-size: 12px; font-weight: 600;
+  cursor: pointer; font-family: inherit; transition: var(--transition);
+}
+.sidebar-new-section-btn:hover { background: var(--light); color: var(--navy); }
 .chip {
   background: var(--gray); color: var(--gray3); padding: 1px 6px;
   border-radius: 4px; font-size: 9px;

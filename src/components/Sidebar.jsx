@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { lsGet } from '../hooks/useLocalStorage.js';
-import { getSections, addSlide, deleteSlideFromList, reorderSlide } from '../services/slideList.js';
+import { getSections, addSlide, deleteSlideFromList, reorderSlide, addSection } from '../services/slideList.js';
 
 function isSlideRedacted(id) {
   return lsGet('redact_' + id, '') === 'true';
@@ -25,8 +25,11 @@ export default function Sidebar({
   const [collapsed, setCollapsed] = useState({});
   const [addingTo, setAddingTo] = useState(null);
   const [addDraft, setAddDraft] = useState('');
+  const [addingSection, setAddingSection] = useState(false);
+  const [sectionDraft, setSectionDraft] = useState('');
   const [, forceRerender] = useState(0);
   const addInputRef = useRef(null);
+  const sectionInputRef = useRef(null);
 
   // Drag state
   const [dragId, setDragId] = useState(null);
@@ -51,6 +54,10 @@ export default function Sidebar({
   useEffect(() => {
     if (addingTo && addInputRef.current) addInputRef.current.focus();
   }, [addingTo]);
+
+  useEffect(() => {
+    if (addingSection && sectionInputRef.current) sectionInputRef.current.focus();
+  }, [addingSection]);
 
   function toggleSection(id) {
     setCollapsed(prev => ({ ...prev, [id]: !prev[id] }));
@@ -219,6 +226,44 @@ export default function Sidebar({
           </div>
         );
       })}
+
+      {/* ── New Section ── */}
+      <div className="sidebar-new-section">
+        {addingSection ? (
+          <div className="slide-add-form">
+            <input
+              ref={sectionInputRef}
+              className="slide-add-input"
+              placeholder="Section title… (e.g. 09.000 My Section)"
+              value={sectionDraft}
+              onChange={e => setSectionDraft(e.target.value)}
+              onKeyDown={e => {
+                if (e.key === 'Enter') {
+                  const t = sectionDraft.trim();
+                  if (t) { addSection(t); setCollapsed(prev => ({ ...prev })); }
+                  setAddingSection(false); setSectionDraft('');
+                }
+                if (e.key === 'Escape') { setAddingSection(false); setSectionDraft(''); }
+              }}
+            />
+            <div className="slide-add-actions">
+              <button
+                className="slide-add-ok"
+                onClick={() => {
+                  const t = sectionDraft.trim();
+                  if (t) addSection(t);
+                  setAddingSection(false); setSectionDraft('');
+                }}
+              >Add Section</button>
+              <button className="slide-add-cancel" onClick={() => { setAddingSection(false); setSectionDraft(''); }}>✕</button>
+            </div>
+          </div>
+        ) : (
+          <button className="sidebar-new-section-btn" onClick={() => setAddingSection(true)}>
+            + New Section
+          </button>
+        )}
+      </div>
     </div>
   );
 }
