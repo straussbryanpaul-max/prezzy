@@ -76,28 +76,31 @@ export function FieldBlock({ block, onUpdate }) {
               {t.icon}
             </button>
           ))}
+          {type === 'dropdown' && (
+            <button
+              className={`mod-field-type-btn${optsOpen ? ' active' : ''}`}
+              onClick={() => setOptsOpen(o => !o)}
+              title="Edit options"
+            >
+              {parsedOptions.length > 0 ? `${parsedOptions.length} opts` : '+ opts'}
+            </button>
+          )}
         </div>
       </div>
 
-      {type === 'dropdown' && (
+      {type === 'dropdown' && optsOpen && (
         <div className="mod-field-opts">
           <div className="mod-field-opts-header">
-            <button className="mod-field-opts-toggle" onClick={() => setOptsOpen(o => !o)}>
-              {parsedOptions.length > 0 ? `▼ ${parsedOptions.length} options` : '▼ Add options'}
-            </button>
-            {(optsOpen || parsedOptions.length > 0) && (
-              <button className="mod-field-opts-close" onClick={() => { update({ options: '' }); setOptsOpen(false); }} title="Clear options">✕</button>
-            )}
+            <span className="mod-field-opts-label">Options — one per line</span>
+            <button className="mod-field-opts-close" onClick={() => setOptsOpen(false)} title="Close">✕</button>
           </div>
-          {optsOpen && (
-            <textarea
-              className="mod-field-opts-ta"
-              rows={3}
-              value={options}
-              onChange={e => update({ options: e.target.value })}
-              placeholder={'Option A\nOption B\nOption C'}
-            />
-          )}
+          <textarea
+            className="mod-field-opts-ta"
+            rows={3}
+            value={options}
+            onChange={e => update({ options: e.target.value })}
+            placeholder={'Option A\nOption B\nOption C'}
+          />
         </div>
       )}
 
