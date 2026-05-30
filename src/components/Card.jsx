@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { useLocalStorage, useLocalStorageBool } from '../hooks/useLocalStorage.js';
+import { useState, useEffect, useRef } from 'react';
+import { useLocalStorage, useLocalStorageBool, lsGet, lsSet } from '../hooks/useLocalStorage.js';
 import { allSlides } from '../data/sections.js';
 import RedactCheck from './RedactCheck.jsx';
 import PreReadCheck from './PreReadCheck.jsx';
@@ -15,6 +15,15 @@ export default function Card({ slideId, title, num, children, onRedactChange }) 
   const [size, setSize] = useLocalStorage('sec_size_' + slideId, 'lg');
   const [commentsOpen, setCommentsOpen] = useState(false);
   const { comments, add: addComment, remove: removeComment } = useComments(slideId);
+  const titleRef = useRef(null);
+  const titleKey = 'title_' + slideId;
+
+  useEffect(() => {
+    if (titleRef.current) {
+      titleRef.current.textContent = lsGet(titleKey, title);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [slideId]);
 
   // Re-render when the current template changes so isDeletedInBaseline is re-evaluated.
   const [, setTemplateVersion] = useState(0);
@@ -87,7 +96,13 @@ export default function Card({ slideId, title, num, children, onRedactChange }) 
         <div className="card-header">
           <div>
             <div className="slide-num">{num}</div>
-            <h2>{title}</h2>
+            <h2
+              ref={titleRef}
+              contentEditable
+              suppressContentEditableWarning
+              onBlur={() => lsSet(titleKey, titleRef.current?.textContent?.trim() || title)}
+              title="Click to rename this slide"
+            />
             <Assignee slideId={slideId} />
           </div>
           <div className="card-header-checks">

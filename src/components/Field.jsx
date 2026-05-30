@@ -1,4 +1,5 @@
-import { useLocalStorage } from '../hooks/useLocalStorage.js';
+import { useRef, useEffect } from 'react';
+import { useLocalStorage, lsGet, lsSet } from '../hooks/useLocalStorage.js';
 
 export function Input({ name, placeholder, type = 'text', onChangeExtra }) {
   const [value, setValue] = useLocalStorage('f_' + name, '');
@@ -42,9 +43,28 @@ export function TextArea({ name, placeholder, rows = 4 }) {
 }
 
 export function FormGroup({ label, children }) {
+  const key = label ? 'f_lbl_' + label.toLowerCase().replace(/[^a-z0-9]+/g, '_') : null;
+  const ref = useRef(null);
+
+  useEffect(() => {
+    if (ref.current && key) {
+      ref.current.textContent = lsGet(key, label);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   return (
     <div className="form-group">
-      {label && <label>{label}</label>}
+      {label && (
+        <label
+          ref={ref}
+          contentEditable
+          suppressContentEditableWarning
+          onBlur={() => key && lsSet(key, ref.current?.textContent?.trim() || label)}
+          className="editable-label"
+          title="Click to rename this label"
+        />
+      )}
       {children}
     </div>
   );

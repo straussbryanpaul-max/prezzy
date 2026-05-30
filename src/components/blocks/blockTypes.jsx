@@ -46,7 +46,6 @@ const FIELD_TYPES = [
 ];
 
 export function FieldBlock({ block, onUpdate }) {
-  const [showSettings, setShowSettings] = useState(false);
   const data = block.data || {};
   const type = data.type || 'text';
   const options = data.options || '';
@@ -65,39 +64,30 @@ export function FieldBlock({ block, onUpdate }) {
           defaultValue={data.label || ''}
           onChange={e => update({ label: e.target.value })}
         />
-        <button
-          className={`mod-field-cfg-btn${showSettings ? ' active' : ''}`}
-          onClick={() => setShowSettings(s => !s)}
-          title="Configure field type & options"
-        >⚙</button>
+        <div className="mod-field-type-row">
+          {FIELD_TYPES.map(t => (
+            <button
+              key={t.key}
+              className={`mod-field-type-btn${type === t.key ? ' active' : ''}`}
+              onClick={() => update({ type: t.key })}
+              title={t.label}
+            >
+              {t.icon}
+            </button>
+          ))}
+        </div>
       </div>
 
-      {showSettings && (
-        <div className="mod-field-settings">
-          <div className="mod-field-type-row">
-            {FIELD_TYPES.map(t => (
-              <button
-                key={t.key}
-                className={`mod-field-type-btn${type === t.key ? ' active' : ''}`}
-                onClick={() => update({ type: t.key })}
-              >
-                <span className="mod-field-type-icon">{t.icon}</span>
-                {t.label}
-              </button>
-            ))}
-          </div>
-          {type === 'dropdown' && (
-            <div className="mod-field-opts">
-              <div className="mod-field-opts-label">Options — one per line</div>
-              <textarea
-                className="mod-field-opts-ta"
-                rows={4}
-                value={options}
-                onChange={e => update({ options: e.target.value })}
-                placeholder={'Option A\nOption B\nOption C'}
-              />
-            </div>
-          )}
+      {type === 'dropdown' && (
+        <div className="mod-field-opts">
+          <div className="mod-field-opts-label">Dropdown options — one per line</div>
+          <textarea
+            className="mod-field-opts-ta"
+            rows={3}
+            value={options}
+            onChange={e => update({ options: e.target.value })}
+            placeholder={'Option A\nOption B\nOption C'}
+          />
         </div>
       )}
 
