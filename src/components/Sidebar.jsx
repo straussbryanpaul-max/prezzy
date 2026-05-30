@@ -102,12 +102,16 @@ export default function Sidebar({
       const target = dropTargetRef.current;
       const ds = dragSlideRef.current;
       if (target && ds) {
-        const sec = sectionsRef.current.find(s => s.id === target.sectionId);
-        if (sec) {
-          let idx = sec.slides.findIndex(s => s.id === target.slideId);
-          if (idx >= 0) {
-            if (target.position === 'after') idx++;
-            reorderSlide(ds.slideId, target.sectionId, idx);
+        if (target.slideId === '__empty__') {
+          reorderSlide(ds.slideId, target.sectionId, 0);
+        } else {
+          const sec = sectionsRef.current.find(s => s.id === target.sectionId);
+          if (sec) {
+            let idx = sec.slides.findIndex(s => s.id === target.slideId);
+            if (idx >= 0) {
+              if (target.position === 'after') idx++;
+              reorderSlide(ds.slideId, target.sectionId, idx);
+            }
           }
         }
       }
@@ -308,7 +312,11 @@ export default function Sidebar({
                   })}
 
                   {sec.slides.length === 0 && (
-                    <div className="slide-empty-drop">Empty — add a slide above</div>
+                    <div
+                      className={`slide-empty-drop${dropTarget?.sectionId === sec.id && dropTarget?.slideId === '__empty__' ? ' active' : ''}`}
+                      data-section-id={sec.id}
+                      data-slide-id="__empty__"
+                    >Drop here</div>
                   )}
 
                   {addingTo === sec.id ? (
