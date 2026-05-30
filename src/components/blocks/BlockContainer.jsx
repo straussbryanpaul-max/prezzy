@@ -1,9 +1,11 @@
 import { useState, useRef } from 'react';
 import Block from './Block.jsx';
-import { TextBlock, TableBlock, ImageBlock, FileBlock, PowerBIBlock, ShapeBlock } from './blockTypes.jsx';
+import { TextBlock, HeadingBlock, FieldBlock, TableBlock, ImageBlock, FileBlock, PowerBIBlock, ShapeBlock } from './blockTypes.jsx';
 
 const TYPE_COMPONENTS = {
   text: TextBlock,
+  heading: HeadingBlock,
+  field: FieldBlock,
   table: TableBlock,
   image: ImageBlock,
   file: FileBlock,
