@@ -111,7 +111,6 @@ export default function Sidebar({
   // ── Drag handlers ──────────────────────────────────────────────
   // ── Slide drag ──────────────────────────────────────────────────
   function onDragStart(e, slideId) {
-    e.stopPropagation();
     dragTypeRef.current = 'slide';
     setDragId(slideId);
     e.dataTransfer.effectAllowed = 'move';
@@ -260,20 +259,17 @@ export default function Sidebar({
                     <div
                       key={sl.id}
                       className={cls}
+                      draggable
                       data-redact-version={redactVersion}
                       data-preread-version={preReadVersion}
                       onClick={() => !isDragging && onNavigate(sl.id)}
                       title={`${sl.num} — ${sl.title}`}
+                      onDragStart={e => onDragStart(e, sl.id)}
+                      onDragEnd={onDragEnd}
                       onDragOver={e => onDragOver(e, sec.id, sl.id)}
                       onDrop={e => onDrop(e, sec.id, sl.id)}
                     >
-                      <span
-                        className="slide-drag-handle"
-                        title="Drag to reorder"
-                        draggable
-                        onDragStart={e => onDragStart(e, sl.id)}
-                        onDragEnd={onDragEnd}
-                      >⠿</span>
+                      <span className="slide-drag-handle">⠿</span>
                       <span className="slide-item-num">{sl.num}</span>
                       <span className="slide-item-title">{sl.title}</span>
                       <div className="slide-item-badges">
