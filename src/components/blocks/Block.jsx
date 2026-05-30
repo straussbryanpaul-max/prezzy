@@ -4,16 +4,19 @@ const SIZE_MAP = { sm: '40%', md: '65%', lg: '100%', half: '50%' };
 
 export default function Block({
   block,
+  isDragging,
+  dropPosition,
   onDelete,
   onResize,
   onBreakOut,
   onDragStart,
   onDragOver,
   onDrop,
+  onDragEnd,
   children,
 }) {
   const [selected, setSelected] = useState(false);
-  const ref = useRef(null);
+  const [handleHovered, setHandleHovered] = useState(false);
 
   const sideBySide = block.size === 'half' || block.size === 'sm';
   const style = {
@@ -23,35 +26,42 @@ export default function Block({
     marginRight: sideBySide ? '1%' : undefined,
   };
 
+  const cls = [
+    'mod-block',
+    selected    ? 'selected'    : '',
+    isDragging  ? 'dragging'    : '',
+    dropPosition === 'before' ? 'drop-before' : '',
+    dropPosition === 'after'  ? 'drop-after'  : '',
+  ].filter(Boolean).join(' ');
+
   return (
     <div
-      ref={ref}
       id={block.id}
-      className={`mod-block${selected ? ' selected' : ''}`}
+      className={cls}
       style={style}
-      draggable
+      draggable={handleHovered}
       onClick={e => {
         if (e.target.closest('.block-controls')) return;
         setSelected(s => !s);
       }}
-      onDragStart={e => onDragStart?.(e, block.id)}
-      onDragOver={e => onDragOver?.(e, block.id)}
-      onDrop={e => onDrop?.(e, block.id)}
+      onDragStart={onDragStart}
+      onDragOver={onDragOver}
+      onDrop={onDrop}
+      onDragEnd={onDragEnd}
     >
       <div className="block-controls">
-        <span className="bc-btn" title="Drag to reorder" style={{ cursor: 'grab' }}>⠿</span>
-        <span className="bc-btn" onClick={() => onResize(block.id, 'sm')} title="Small">S</span>
-        <span className="bc-btn" onClick={() => onResize(block.id, 'md')} title="Medium">M</span>
-        <span className="bc-btn" onClick={() => onResize(block.id, 'lg')} title="Full">L</span>
-        <span className="bc-btn" onClick={() => onResize(block.id, 'half')} title="Half width">½</span>
-        <span style={{ width: 1, height: 14, background: 'rgba(255,255,255,.2)', margin: '0 2px', display: 'inline-block' }}></span>
         <span
-          className="bc-btn bc-breakout"
-          onClick={() => onBreakOut?.(block.id)}
-          title="Break out into its own numbered slide"
-        >
-          ↗ Break out
-        </span>
+          className="bc-btn bc-drag-handle"
+          title="Drag to reorder"
+          onMouseEnter={() => setHandleHovered(true)}
+          onMouseLeave={() => setHandleHovered(false)}
+        >⠿</span>
+        <span className="bc-btn" onClick={() => onResize(block.id, 'sm')}   title="Small">S</span>
+        <span className="bc-btn" onClick={() => onResize(block.id, 'md')}   title="Medium">M</span>
+        <span className="bc-btn" onClick={() => onResize(block.id, 'lg')}   title="Full">L</span>
+        <span className="bc-btn" onClick={() => onResize(block.id, 'half')} title="Half width">½</span>
+        <span style={{ width: 1, height: 14, background: 'rgba(255,255,255,.2)', margin: '0 2px', display: 'inline-block' }} />
+        <span className="bc-btn bc-breakout" onClick={() => onBreakOut?.(block.id)} title="Break out into its own slide">↗ Break out</span>
         <span className="bc-btn del" onClick={() => onDelete(block.id)} title="Delete">🗑</span>
       </div>
       <div className="block-inner">{children}</div>

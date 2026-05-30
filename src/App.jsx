@@ -42,7 +42,7 @@ export default function App() {
   const [refsDrawerOpen, setRefsDrawerOpen] = useState(false);
   const [libraryOpen, setLibraryOpen] = useState(false);
 
-  const { blocks, add, update, remove, resize, reorder, breakOut } = useBlocks(activeSlideId);
+  const { blocks, add, addAt, update, remove, resize, reorder, reorderTo, breakOut } = useBlocks(activeSlideId);
   const [customSlidesVersion, setCustomSlidesVersion] = useState(0);
   useEffect(() => {
     const bump = () => setCustomSlidesVersion(v => v + 1);
@@ -240,7 +240,8 @@ export default function App() {
               onUpdate={update}
               onDelete={remove}
               onResize={resize}
-              onReorder={reorder}
+              onReorderTo={reorderTo}
+              onAddAt={addAt}
               onBreakOut={onBreakOut}
             />
           </RedactedShroud>

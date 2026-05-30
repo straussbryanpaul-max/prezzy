@@ -34,6 +34,21 @@ export function useBlocks(slideId) {
     [blocks, key]
   );
 
+  const addAt = useCallback(
+    (type, index, data = {}) => {
+      const id = 'blk_' + Date.now();
+      const block = { id, type, size: 'lg', data };
+      const next = [...blocks.slice(0, index), block, ...blocks.slice(index)];
+      persist(next);
+    },
+    [blocks, key]
+  );
+
+  const reorderTo = useCallback(
+    (next) => persist(next),
+    [key]
+  );
+
   const update = useCallback(
     (id, data) => {
       const next = blocks.map(b => (b.id === id ? { ...b, data: { ...b.data, ...data } } : b));
@@ -92,5 +107,5 @@ export function useBlocks(slideId) {
     [blocks, key]
   );
 
-  return { blocks, add, update, remove, resize, reorder, breakOut };
+  return { blocks, add, addAt, update, remove, resize, reorder, reorderTo, breakOut };
 }
