@@ -1,4 +1,5 @@
-import { sections } from '../data/sections.js';
+import { useEffect, useState } from 'react';
+import { getSections } from '../services/slideList.js';
 import { lsGet } from '../hooks/useLocalStorage.js';
 
 function isRedacted(sl) {
@@ -12,6 +13,18 @@ function isPreRead(sl) {
 }
 
 export default function TOC() {
+  const [sections, setSections] = useState(() => getSections());
+
+  useEffect(() => {
+    const refresh = () => setSections(getSections());
+    window.addEventListener('slide-list-change', refresh);
+    window.addEventListener('preread-change', refresh);
+    return () => {
+      window.removeEventListener('slide-list-change', refresh);
+      window.removeEventListener('preread-change', refresh);
+    };
+  }, []);
+
   return (
     <>
       <div className="section-divider">
