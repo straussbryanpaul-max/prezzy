@@ -377,6 +377,18 @@ body {
 .slide-item.redacted-item { opacity: .5; }
 .slide-item.redacted-item .badge { color: var(--red); }
 
+/* Empty-section drop zone */
+.slide-empty-drop {
+  margin: 4px 8px; padding: 8px; border-radius: 6px;
+  border: 1.5px dashed var(--gray); color: var(--gray2);
+  font-size: 11px; text-align: center;
+  transition: var(--transition);
+}
+.slide-empty-drop.active {
+  border-color: var(--teal); color: var(--teal);
+  background: rgba(0,163,161,.06);
+}
+
 /* Inline add-slide form */
 .slide-add-form {
   padding: 6px 10px 8px;

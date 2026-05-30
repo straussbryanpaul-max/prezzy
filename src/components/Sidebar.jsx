@@ -34,6 +34,7 @@ export default function Sidebar({
   // Slide drag state
   const [dragId, setDragId] = useState(null);
   const [dropInfo, setDropInfo] = useState(null); // { sectionId, slideId, position }
+  const [dropEmptySec, setDropEmptySec] = useState(null);
 
   // Section drag state
   const [dragSecId, setDragSecId] = useState(null);
@@ -117,6 +118,7 @@ export default function Sidebar({
   function onDragEnd() {
     setDragId(null);
     setDropInfo(null);
+    setDropEmptySec(null);
   }
 
   function onDragOver(e, sectionId, slideId) {
@@ -273,6 +275,18 @@ export default function Sidebar({
                     </div>
                   );
                 })}
+
+                {/* Drop zone shown when section is empty and a slide is being dragged */}
+                {sec.slides.length === 0 && dragId && (
+                  <div
+                    className={`slide-empty-drop${dropEmptySec === sec.id ? ' active' : ''}`}
+                    onDragOver={e => { if (dragSecId) return; e.preventDefault(); setDropEmptySec(sec.id); }}
+                    onDragLeave={() => setDropEmptySec(null)}
+                    onDrop={e => { e.preventDefault(); reorderSlide(dragId, sec.id, 0); onDragEnd(); }}
+                  >
+                    Drop here
+                  </div>
+                )}
 
                 {addingTo === sec.id ? (
                   <div className="slide-add-form">
