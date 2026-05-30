@@ -856,15 +856,20 @@ body.presentation-mode { overflow: hidden; }
 .guidance {
   background: linear-gradient(135deg, #F0F9FF, #E0F2FE);
   border: 1px solid #BAE6FD; border-radius: 8px;
-  padding: 14px 18px; margin-bottom: 20px; cursor: pointer;
+  padding: 14px 18px; margin-bottom: 20px;
 }
 .guidance-header {
-  display: flex; align-items: center; gap: 8px;
-  font-size: 13px; font-weight: 600; color: var(--blue);
+  display: flex; align-items: center; justify-content: space-between;
+  font-size: 13px; font-weight: 600; color: var(--blue); cursor: pointer;
 }
-.guidance-body {
-  font-size: 12px; color: #0369A1; margin-top: 8px; line-height: 1.7;
+.guidance-toggle { font-size: 11px; font-weight: 400; opacity: 0.7; }
+.guidance-body { font-size: 12px; color: #0369A1; margin-top: 8px; line-height: 1.7; }
+.guidance-text {
+  display: block; outline: none; border-radius: 4px; padding: 2px 4px; margin: -2px -4px;
+  cursor: text; transition: background .15s; white-space: pre-wrap; min-height: 1em;
 }
+.guidance-text:hover { background: rgba(3,105,161,.08); }
+.guidance-text:focus { background: rgba(3,105,161,.1); box-shadow: 0 0 0 2px rgba(3,105,161,.2); }
 
 /* ============ SAFETY GENERATOR ============ */
 .safety-gen {
