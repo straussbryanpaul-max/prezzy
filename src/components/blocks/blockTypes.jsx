@@ -85,7 +85,7 @@ export function FieldBlock({ block, onUpdate }) {
             <button className="mod-field-opts-toggle" onClick={() => setOptsOpen(o => !o)}>
               {parsedOptions.length > 0 ? `▼ ${parsedOptions.length} options` : '▼ Add options'}
             </button>
-            {optsOpen && (
+            {(optsOpen || parsedOptions.length > 0) && (
               <button className="mod-field-opts-close" onClick={() => setOptsOpen(false)} title="Close">✕</button>
             )}
           </div>
