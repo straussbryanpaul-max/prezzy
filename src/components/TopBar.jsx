@@ -20,8 +20,6 @@ export default function TopBar({
   const [templateName, setTemplateName] = useState(() => getCurrentTemplateName());
   const [driftCount, setDriftCount] = useState(0);
 
-  // Make API key available globally (sourced from localStorage if a developer
-  // wires it in elsewhere, e.g. server-injected before SSR or a backend proxy).
   useEffect(() => {
     window._apiKey = lsGet('apiKey', '');
   }, []);
@@ -44,47 +42,69 @@ export default function TopBar({
 
   return (
     <div className="topbar">
-      <div className="logo">
-        📊 Estimate Basis Builder <span>M&T</span>
+
+      {/* ── LEFT: branding ── */}
+      <div className="topbar-logo">
+        <span className="topbar-logo-icon">📊</span>
+        <span className="topbar-logo-name">Estimate Basis Builder</span>
+        <span className="topbar-badge">M&amp;T</span>
       </div>
-      <div className="project-name">
-        {projectName || 'No Project Selected'}
+
+      {/* ── MIDDLE: project identity ── */}
+      <div className="topbar-identity">
+        <span className="topbar-project">{projectName || 'No Project Selected'}</span>
         <button
-          type="button"
           className={`template-tag${templateName ? '' : ' template-tag-none'}${driftCount > 0 ? ' template-tag-dirty' : ''}`}
           onClick={onOpenDrift}
           title="Click to see what's changed from the baseline"
         >
-          <span>📑 {templateName || 'No template (default)'}</span>
+          <span>📑 {templateName || 'No template'}</span>
           {driftCount > 0 ? (
-            <span className="template-tag-changes">⚠ {driftCount} change{driftCount !== 1 ? 's' : ''}</span>
+            <span className="template-tag-changes">⚠ {driftCount}</span>
           ) : templateName ? (
-            <span className="template-tag-clean">✓ clean</span>
+            <span className="template-tag-clean">✓</span>
           ) : null}
         </button>
       </div>
-      <div className="controls">
-        <button onClick={onToggleAI}>🤖 AI</button>
-        <button onClick={onOpenStatus}>📊 Status</button>
-        <button onClick={onPresent}>▶ Present</button>
-        <button onClick={onToggleTemplates}>📑 Templates</button>
-        <button onClick={onToggleRefs} title="Past examples for this slide">🗂 References</button>
-        <button onClick={onOpenLibrary} title="Browse the full references library">📚 Library</button>
-        <button onClick={onSaveDeck} title="Snapshot this deck into the references library">💾 Save Deck</button>
-        <button
-          className={`redact-toggle${showRedacted ? ' active' : ''}`}
-          onClick={onToggleRedaction}
-        >
-          {showRedacted ? '🔓 Showing All' : '🔒 Show Redacted'}
-        </button>
-        <button onClick={onPrint}>📄 Print PDF</button>
-        <button
-          onClick={() =>
-            alert('PPTX export requires pptxgenjs integration. Save your work and use the export API.')
-          }
-        >
-          📊 Export PPTX
-        </button>
+
+      {/* ── RIGHT: actions ── */}
+      <div className="topbar-actions">
+
+        {/* Explore */}
+        <div className="tb-group">
+          <button className="tb-btn" onClick={onToggleAI} title="AI Assistant">🤖 AI</button>
+          <button className="tb-btn" onClick={onOpenStatus} title="Project Status">📊 Status</button>
+        </div>
+
+        <div className="tb-sep" />
+
+        {/* Present — primary CTA */}
+        <button className="tb-btn tb-primary" onClick={onPresent}>▶ Present</button>
+
+        <div className="tb-sep" />
+
+        {/* Template & reference tools */}
+        <div className="tb-group">
+          <button className="tb-btn" onClick={onToggleTemplates} title="Templates">📑 Templates</button>
+          <button className="tb-btn" onClick={onToggleRefs} title="Slide references">🗂 Refs</button>
+          <button className="tb-btn" onClick={onOpenLibrary} title="Full reference library">📚 Library</button>
+          <button className="tb-btn" onClick={onSaveDeck} title="Save deck to library">💾 Save</button>
+        </div>
+
+        <div className="tb-sep" />
+
+        {/* Output */}
+        <div className="tb-group">
+          <button
+            className={`tb-btn tb-redact${showRedacted ? ' active' : ''}`}
+            onClick={onToggleRedaction}
+            title={showRedacted ? 'Showing all fields' : 'Showing redacted view'}
+          >
+            {showRedacted ? '🔓 Unredacted' : '🔒 Redacted'}
+          </button>
+          <button className="tb-btn" onClick={onPrint} title="Print to PDF">📄 Print</button>
+        </div>
+
       </div>
     </div>
   );

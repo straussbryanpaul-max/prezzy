@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { useLocalStorage, useLocalStorageBool, lsGet, lsSet } from '../hooks/useLocalStorage.js';
 import { allSlides } from '../data/sections.js';
 import RedactCheck from './RedactCheck.jsx';
@@ -33,10 +34,25 @@ export default function Card({ slideId, title, num, children, onRedactChange }) 
     return () => window.removeEventListener('current-template-change', bump);
   }, []);
 
-  // Close the comments panel when navigating to a different slide.
+  // Global coordination: only one card's drawer open at a time.
+  useEffect(() => {
+    const handler = e => setCommentsOpen(e.detail.slideId === slideId);
+    window.addEventListener('comment-drawer-open', handler);
+    return () => window.removeEventListener('comment-drawer-open', handler);
+  }, [slideId]);
+
+  // Close drawer when navigating to a different slide.
   useEffect(() => {
     setCommentsOpen(false);
   }, [slideId]);
+
+  function toggleComments() {
+    if (commentsOpen) {
+      setCommentsOpen(false);
+    } else {
+      window.dispatchEvent(new CustomEvent('comment-drawer-open', { detail: { slideId } }));
+    }
+  }
 
   function setDeleted(v) {
     setDeletedRaw(v);
@@ -53,7 +69,6 @@ export default function Card({ slideId, title, num, children, onRedactChange }) 
   }
 
   if (deleted) {
-    // Deletion is canonical (baked into the current template) — hide completely.
     if (isDeletedInBaseline(slideId)) return null;
     return (
       <div className="deleted-section-ghost" onClick={() => setDeleted(false)}>
@@ -72,56 +87,77 @@ export default function Card({ slideId, title, num, children, onRedactChange }) 
     marginBottom: 24,
   };
 
+  const displayTitle = titleRef.current?.textContent?.trim() || title;
+
   return (
-    <div className={`editable-section${preread ? ' is-preread' : ''}`} style={wrapperStyle}>
-      <div className="sec-ctl-bar">
-        <button className={`sec-ctl${size === 'sm' ? ' active' : ''}`} onClick={() => setSize('sm')} title="Small (40%)">S</button>
-        <button className={`sec-ctl${size === 'md' ? ' active' : ''}`} onClick={() => setSize('md')} title="Medium (65%)">M</button>
-        <button className={`sec-ctl${size === 'half' ? ' active' : ''}`} onClick={() => setSize('half')} title="Half (50%)">½</button>
-        <button className={`sec-ctl${size === 'lg' ? ' active' : ''}`} onClick={() => setSize('lg')} title="Full width">L</button>
-        <span className="sec-ctl-sep" />
-        <button className="sec-ctl del" onClick={() => setDeleted(true)} title="Delete this section (can be restored)">🗑</button>
-      </div>
-
-      {preread && (
-        <div className="preread-banner">
-          <span className="preread-banner-icon">📖</span>
-          <span className="preread-banner-text">
-            <strong>PRE-READ ONLY</strong> — Background material, not for live review
-          </span>
+    <>
+      <div className={`editable-section${preread ? ' is-preread' : ''}`} style={wrapperStyle}>
+        <div className="sec-ctl-bar">
+          <button className={`sec-ctl${size === 'sm' ? ' active' : ''}`} onClick={() => setSize('sm')} title="Small (40%)">S</button>
+          <button className={`sec-ctl${size === 'md' ? ' active' : ''}`} onClick={() => setSize('md')} title="Medium (65%)">M</button>
+          <button className={`sec-ctl${size === 'half' ? ' active' : ''}`} onClick={() => setSize('half')} title="Half (50%)">½</button>
+          <button className={`sec-ctl${size === 'lg' ? ' active' : ''}`} onClick={() => setSize('lg')} title="Full width">L</button>
+          <span className="sec-ctl-sep" />
+          <button className="sec-ctl del" onClick={() => setDeleted(true)} title="Delete this section (can be restored)">🗑</button>
         </div>
-      )}
 
-      <div className="slide-card" id={`card_${slideId}`}>
-        <div className="card-header">
-          <div>
-            <div className="slide-num">{num}</div>
-            <h2
-              ref={titleRef}
-              contentEditable
-              suppressContentEditableWarning
-              onBlur={() => lsSet(titleKey, titleRef.current?.textContent?.trim() || title)}
-              title="Click to rename this slide"
-            />
-            <Assignee slideId={slideId} />
+        {preread && (
+          <div className="preread-banner">
+            <span className="preread-banner-icon">📖</span>
+            <span className="preread-banner-text">
+              <strong>PRE-READ ONLY</strong> — Background material, not for live review
+            </span>
           </div>
-          <div className="card-header-checks">
-            <button
-              className={`comment-toggle${commentsOpen ? ' active' : ''}${comments.length > 0 ? ' has-comments' : ''}`}
-              onClick={() => setCommentsOpen(o => !o)}
-              title={commentsOpen ? 'Hide comments' : 'Show comments'}
-            >
-              💬{comments.length > 0 && <span className="comment-count-badge">{comments.length}</span>}
-            </button>
-            <PreReadCheck checked={preread} onChange={setPreread} />
-            <RedactCheck slideId={slideId} onChange={onRedactChange} />
-          </div>
-        </div>
-        <div className="card-body">{children}</div>
-        {commentsOpen && (
-          <Comments comments={comments} onAdd={addComment} onRemove={removeComment} />
         )}
+
+        <div className="slide-card" id={`card_${slideId}`}>
+          <div className="card-header">
+            <div>
+              <div className="slide-num">{num}</div>
+              <h2
+                ref={titleRef}
+                contentEditable
+                suppressContentEditableWarning
+                onBlur={() => lsSet(titleKey, titleRef.current?.textContent?.trim() || title)}
+                title="Click to rename this slide"
+              />
+              <Assignee slideId={slideId} />
+            </div>
+            <div className="card-header-checks">
+              <button
+                className={`comment-toggle${commentsOpen ? ' active' : ''}${comments.length > 0 ? ' has-comments' : ''}`}
+                onClick={toggleComments}
+                title={commentsOpen ? 'Hide comments' : 'Show comments'}
+              >
+                💬{comments.length > 0 && <span className="comment-count-badge">{comments.length}</span>}
+              </button>
+              <PreReadCheck checked={preread} onChange={setPreread} />
+              <RedactCheck slideId={slideId} onChange={onRedactChange} />
+            </div>
+          </div>
+          <div className="card-body">{children}</div>
+        </div>
       </div>
-    </div>
+
+      {/* Side drawer — rendered into body to escape any stacking contexts */}
+      {commentsOpen && createPortal(
+        <>
+          <div className="comments-drawer-backdrop" onClick={() => setCommentsOpen(false)} />
+          <div className="comments-drawer">
+            <div className="comments-drawer-header">
+              <div className="comments-drawer-title">
+                <span className="comments-drawer-icon">💬</span>
+                <span>{displayTitle}</span>
+              </div>
+              <button className="comments-drawer-close" onClick={() => setCommentsOpen(false)}>✕</button>
+            </div>
+            <div className="comments-drawer-body">
+              <Comments comments={comments} onAdd={addComment} onRemove={removeComment} />
+            </div>
+          </div>
+        </>,
+        document.body
+      )}
+    </>
   );
 }
