@@ -165,7 +165,12 @@ export default function Sidebar({
   }
 
   function onSecDragOver(e, sectionId) {
-    if (dragTypeRef.current !== 'section') return; // only handle section drags
+    if (dragTypeRef.current === 'slide') {
+      // Keep drag valid as it passes over section headers / gaps between slides
+      e.preventDefault();
+      return;
+    }
+    if (dragTypeRef.current !== 'section') return;
     e.preventDefault();
     e.stopPropagation();
     if (dragSecId === sectionId) return;
@@ -177,6 +182,16 @@ export default function Sidebar({
   }
 
   function onSecDrop(e, sectionId) {
+    if (dragTypeRef.current === 'slide') {
+      // Dropped on a section area that isn't a specific slide — append to section
+      e.preventDefault();
+      if (dragId) {
+        const sec = sections.find(s => s.id === sectionId);
+        reorderSlide(dragId, sectionId, sec ? sec.slides.length : 0);
+        onDragEnd();
+      }
+      return;
+    }
     if (dragTypeRef.current !== 'section') return;
     e.preventDefault();
     e.stopPropagation();
