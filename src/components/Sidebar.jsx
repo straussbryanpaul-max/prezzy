@@ -1,7 +1,6 @@
-import { useEffect, useState } from 'react';
-import { sections } from '../data/sections.js';
+import { useEffect, useRef, useState } from 'react';
 import { lsGet } from '../hooks/useLocalStorage.js';
-import { getCustomSlides } from '../services/customSlides.js';
+import { getSections, addSlide, deleteSlideFromList } from '../services/slideList.js';
 
 function isSlideRedacted(id) {
   return lsGet('redact_' + id, '') === 'true';
@@ -19,46 +18,74 @@ export default function Sidebar({
   onNavigate,
   redactVersion,
   preReadVersion,
-  customSlidesVersion,
   open = true,
   onClose,
 }) {
+  const [sections, setSections] = useState(() => getSections());
   const [collapsed, setCollapsed] = useState({});
-  const [customSlides, setCustomSlides] = useState(() => getCustomSlides());
+  const [addingTo, setAddingTo] = useState(null); // sectionId currently adding to
+  const [addDraft, setAddDraft] = useState('');
   const [, forceRerender] = useState(0);
+  const addInputRef = useRef(null);
+
+  function refresh() {
+    setSections(getSections());
+    forceRerender(v => v + 1);
+  }
 
   useEffect(() => {
-    setCustomSlides(getCustomSlides());
-  }, [customSlidesVersion]);
-
-  // Listen directly for state-change events so the sidebar reflects them
-  // immediately, regardless of parent prop bumps.
-  useEffect(() => {
-    const bump = () => forceRerender(v => v + 1);
-    window.addEventListener('preread-change', bump);
-    window.addEventListener('assignment-change', bump);
-    window.addEventListener('custom-slides-change', bump);
+    window.addEventListener('slide-list-change', refresh);
+    window.addEventListener('preread-change', refresh);
+    window.addEventListener('assignment-change', refresh);
     return () => {
-      window.removeEventListener('preread-change', bump);
-      window.removeEventListener('assignment-change', bump);
-      window.removeEventListener('custom-slides-change', bump);
+      window.removeEventListener('slide-list-change', refresh);
+      window.removeEventListener('preread-change', refresh);
+      window.removeEventListener('assignment-change', refresh);
     };
   }, []);
+
+  useEffect(() => {
+    if (addingTo && addInputRef.current) addInputRef.current.focus();
+  }, [addingTo]);
 
   function toggleSection(id) {
     setCollapsed(prev => ({ ...prev, [id]: !prev[id] }));
   }
 
+  function openAddForm(sectionId, e) {
+    e.stopPropagation();
+    setAddDraft('');
+    setAddingTo(sectionId);
+  }
+
+  function confirmAdd(sectionId) {
+    const title = addDraft.trim();
+    if (!title) { setAddingTo(null); return; }
+    const newId = addSlide(sectionId, title);
+    setAddingTo(null);
+    if (newId) onNavigate(newId);
+  }
+
+  function onAddKeyDown(e, sectionId) {
+    if (e.key === 'Enter') confirmAdd(sectionId);
+    if (e.key === 'Escape') setAddingTo(null);
+  }
+
+  function onDeleteSlide(sl, e) {
+    e.stopPropagation();
+    const label = sl.isCustom
+      ? `Delete "${sl.title}"? This also removes its blocks.`
+      : `Remove "${sl.title}" from this presentation?\n\n(The slide data is not lost — it can be restored by resetting the slide list.)`;
+    if (!confirm(label)) return;
+    deleteSlideFromList(sl.id);
+    if (sl.id === activeSlideId) onNavigate('cover');
+  }
+
   return (
     <div className={`sidebar${open ? '' : ' hidden'}`}>
-      <button className="sidebar-close" onClick={onClose} title="Hide sidebar">
-        ◀
-      </button>
-      {[...sections, ...(customSlides.length ? [{
-        id: 's_custom',
-        title: '✨ Custom Slides',
-        slides: customSlides,
-      }] : [])].map(sec => {
+      <button className="sidebar-close" onClick={onClose} title="Hide sidebar">◀</button>
+
+      {sections.map(sec => {
         const isCollapsed = !!collapsed[sec.id];
         return (
           <div key={sec.id} className="section-group">
@@ -66,9 +93,17 @@ export default function Sidebar({
               className={`section-header${isCollapsed ? ' collapsed' : ''}`}
               onClick={() => toggleSection(sec.id)}
             >
-              {sec.title}
-              <span className="arrow">▼</span>
+              <span className="section-header-title">{sec.title}</span>
+              <div className="section-header-actions">
+                <button
+                  className="section-add-btn"
+                  title="Add slide to this section"
+                  onClick={e => openAddForm(sec.id, e)}
+                >+</button>
+                <span className="arrow">▼</span>
+              </div>
             </div>
+
             {!isCollapsed && (
               <div className="section-items">
                 {sec.slides.map(sl => {
@@ -88,15 +123,41 @@ export default function Sidebar({
                     >
                       <span className="slide-item-num">{sl.num}</span>
                       <span className="slide-item-title">{sl.title}</span>
-                      {preread && (
-                        <span className="badge chip chip-preread" title="Pre-Read Only">PRE</span>
-                      )}
-                      {redacted && (
-                        <span className="badge" title="Redacted">🔒</span>
-                      )}
+                      <div className="slide-item-badges">
+                        {preread && <span className="badge chip chip-preread" title="Pre-Read Only">PRE</span>}
+                        {redacted && <span className="badge" title="Redacted">🔒</span>}
+                      </div>
+                      <button
+                        className="slide-item-del"
+                        title="Remove this slide"
+                        onClick={e => onDeleteSlide(sl, e)}
+                      >×</button>
                     </div>
                   );
                 })}
+
+                {/* Inline add form */}
+                {addingTo === sec.id ? (
+                  <div className="slide-add-form">
+                    <input
+                      ref={addInputRef}
+                      className="slide-add-input"
+                      placeholder="Slide title…"
+                      value={addDraft}
+                      onChange={e => setAddDraft(e.target.value)}
+                      onKeyDown={e => onAddKeyDown(e, sec.id)}
+                    />
+                    <div className="slide-add-actions">
+                      <button className="slide-add-ok" onClick={() => confirmAdd(sec.id)}>Add</button>
+                      <button className="slide-add-cancel" onClick={() => setAddingTo(null)}>✕</button>
+                    </div>
+                  </div>
+                ) : (
+                  <button
+                    className="section-add-slide-btn"
+                    onClick={e => openAddForm(sec.id, e)}
+                  >+ Add slide</button>
+                )}
               </div>
             )}
           </div>

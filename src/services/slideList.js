@@ -1,0 +1,137 @@
+// Authoritative slide list — layers on top of sections.js defaults.
+// Persisted to localStorage so the user can add/remove/reorder slides without
+// touching code. All custom slides created here are also registered in the
+// customSlides registry so SlideRouter and CustomSlide.jsx can find them.
+
+import { sections as builtIn } from '../data/sections.js';
+import { createCustomSlide, getCustomSlides, deleteCustomSlide } from './customSlides.js';
+
+const KEY = 'slide_list';
+
+function numConfig(sectionTitle) {
+  const m = sectionTitle.match(/^(\d{2})\.(\d{3})/);
+  return m ? { prefix: m[1], base: parseInt(m[2], 10) } : null;
+}
+
+function computeNums(secs) {
+  return secs.map(sec => {
+    const cfg = numConfig(sec.title);
+    if (!cfg) return sec;
+    return {
+      ...sec,
+      slides: sec.slides.map((sl, i) => ({
+        ...sl,
+        num: `${cfg.prefix}.${String(cfg.base + i + 1).padStart(3, '0')}`,
+      })),
+    };
+  });
+}
+
+function buildDefault() {
+  const secs = builtIn.map(sec => ({
+    id: sec.id,
+    title: sec.title,
+    slides: sec.slides.map(sl => ({
+      id: sl.id,
+      title: sl.title,
+      num: sl.num,
+      isCustom: false,
+      preread: !!sl.preread,
+      redacted: !!sl.redacted,
+    })),
+  }));
+
+  const custom = getCustomSlides();
+  if (custom.length) {
+    secs.push({
+      id: 's_custom',
+      title: '✨ Custom Slides',
+      slides: custom.map(sl => ({
+        id: sl.id,
+        title: sl.title,
+        num: sl.num,
+        isCustom: true,
+        preread: false,
+        redacted: false,
+      })),
+    });
+  }
+
+  return computeNums(secs);
+}
+
+function load() {
+  try {
+    const raw = localStorage.getItem(KEY);
+    return raw ? computeNums(JSON.parse(raw)) : null;
+  } catch {
+    return null;
+  }
+}
+
+function persist(secs) {
+  localStorage.setItem(KEY, JSON.stringify(secs));
+  window.dispatchEvent(new Event('slide-list-change'));
+}
+
+export function getSections() {
+  return load() || buildDefault();
+}
+
+export function getAllSlides() {
+  return getSections().flatMap(s => s.slides);
+}
+
+export function addSlide(sectionId, title) {
+  const secs = load() || buildDefault();
+
+  let sec = secs.find(s => s.id === sectionId);
+  if (!sec) {
+    if (sectionId === 's_custom') {
+      sec = { id: 's_custom', title: '✨ Custom Slides', slides: [] };
+      secs.push(sec);
+    } else {
+      return null;
+    }
+  }
+
+  const slideId = createCustomSlide(title || 'New Slide');
+
+  sec.slides.push({
+    id: slideId,
+    title: title || 'New Slide',
+    num: '',
+    isCustom: true,
+    preread: false,
+    redacted: false,
+  });
+
+  persist(computeNums(secs));
+  return slideId;
+}
+
+export function deleteSlideFromList(slideId) {
+  const secs = load() || buildDefault();
+  let wasCustom = false;
+
+  for (const sec of secs) {
+    const idx = sec.slides.findIndex(s => s.id === slideId);
+    if (idx >= 0) {
+      wasCustom = sec.slides[idx].isCustom;
+      sec.slides.splice(idx, 1);
+      break;
+    }
+  }
+
+  if (wasCustom) deleteCustomSlide(slideId);
+  persist(computeNums(secs));
+}
+
+export function updateSlideTitleInList(slideId, newTitle) {
+  const secs = load() || buildDefault();
+  for (const sec of secs) {
+    const sl = sec.slides.find(s => s.id === slideId);
+    if (sl) { sl.title = newTitle; break; }
+  }
+  persist(secs);
+}

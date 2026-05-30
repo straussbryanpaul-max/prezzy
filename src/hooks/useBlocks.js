@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { createCustomSlide } from '../services/customSlides.js';
+import { addSlide } from '../services/slideList.js';
 
 export function useBlocks(slideId) {
   const key = 'blocks_' + slideId;
@@ -92,7 +92,7 @@ export function useBlocks(slideId) {
     (blockId, title) => {
       const block = blocks.find(b => b.id === blockId);
       if (!block) return null;
-      const newSlideId = createCustomSlide(title);
+      const newSlideId = addSlide('s_custom', title);
       // Remove from this slide
       const remaining = blocks.filter(b => b.id !== blockId);
       persist(remaining);

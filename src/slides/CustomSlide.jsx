@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import Card from '../components/Card.jsx';
 import { findCustomSlide, renameCustomSlide, deleteCustomSlide } from '../services/customSlides.js';
+import { getAllSlides, updateSlideTitleInList, deleteSlideFromList } from '../services/slideList.js';
 
 export default function CustomSlide({ slideId, onRedactChange, onNavigateHome }) {
-  const meta = findCustomSlide(slideId);
+  const meta = findCustomSlide(slideId) || getAllSlides().find(s => s.id === slideId);
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(meta?.title || '');
 
@@ -15,21 +16,25 @@ export default function CustomSlide({ slideId, onRedactChange, onNavigateHome })
     );
   }
 
+  // Prefer computed num from slideList (stays in sync with sidebar)
+  const num = getAllSlides().find(s => s.id === slideId)?.num || meta.num;
+
   function commitRename() {
     if (draft.trim()) {
       renameCustomSlide(slideId, draft);
+      updateSlideTitleInList(slideId, draft);
     }
     setEditing(false);
   }
 
   function onDelete() {
     if (!confirm(`Delete custom slide "${meta.title}"? This also removes its blocks.`)) return;
-    deleteCustomSlide(slideId);
+    deleteSlideFromList(slideId);
     onNavigateHome?.();
   }
 
   return (
-    <Card slideId={slideId} title={meta.title} num={meta.num} onRedactChange={onRedactChange}>
+    <Card slideId={slideId} title={meta.title} num={num} onRedactChange={onRedactChange}>
       <div className="custom-slide-tools">
         {editing ? (
           <div className="custom-slide-rename">

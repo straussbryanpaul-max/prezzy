@@ -11,8 +11,7 @@ import DriftView from './components/DriftView.jsx';
 import ReferencesDrawer from './components/ReferencesDrawer.jsx';
 import ReferencesLibrary from './components/ReferencesLibrary.jsx';
 import { saveDeckAsReferences } from './services/references.js';
-import { allSlides } from './data/sections.js';
-import { findCustomSlide } from './services/customSlides.js';
+import { getAllSlides, addSlide } from './services/slideList.js';
 import BlockToolbar from './components/blocks/BlockToolbar.jsx';
 import BlockContainer from './components/blocks/BlockContainer.jsx';
 import ShapePicker from './components/blocks/ShapePicker.jsx';
@@ -149,8 +148,8 @@ export default function App() {
         label
       );
       if (!title) return;
-      import('./services/customSlides.js').then(({ createCustomSlide }) => {
-        const newId = createCustomSlide(title);
+      import('./services/slideList.js').then(({ addSlide: _addSlide }) => {
+        const newId = _addSlide('s_custom', title);
         setActiveSlideId(newId);
         window.scrollTo({ top: 0, behavior: 'smooth' });
         setStatus(`✓ New slide "${title}" created`);
@@ -181,8 +180,7 @@ export default function App() {
   }
 
   const activeSlideTitle =
-    allSlides.find(s => s.id === activeSlideId)?.title ||
-    findCustomSlide(activeSlideId)?.title ||
+    getAllSlides().find(s => s.id === activeSlideId)?.title ||
     activeSlideId;
 
   return (
