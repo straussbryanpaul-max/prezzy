@@ -126,7 +126,7 @@ export default function Sidebar({
   }
 
   function onDragOver(e, sectionId, slideId) {
-    e.stopPropagation();
+    // No stopPropagation — let event bubble to sidebar root as catch-all
     e.preventDefault();
     if (dragId === slideId) return;
     const rect = e.currentTarget.getBoundingClientRect();
@@ -165,11 +165,6 @@ export default function Sidebar({
   }
 
   function onSecDragOver(e, sectionId) {
-    if (dragTypeRef.current === 'slide') {
-      // Keep drag valid as it passes over section headers / gaps between slides
-      e.preventDefault();
-      return;
-    }
     if (dragTypeRef.current !== 'section') return;
     e.preventDefault();
     e.stopPropagation();
@@ -182,16 +177,6 @@ export default function Sidebar({
   }
 
   function onSecDrop(e, sectionId) {
-    if (dragTypeRef.current === 'slide') {
-      // Dropped on a section area that isn't a specific slide — append to section
-      e.preventDefault();
-      if (dragId) {
-        const sec = sections.find(s => s.id === sectionId);
-        reorderSlide(dragId, sectionId, sec ? sec.slides.length : 0);
-        onDragEnd();
-      }
-      return;
-    }
     if (dragTypeRef.current !== 'section') return;
     e.preventDefault();
     e.stopPropagation();
@@ -204,7 +189,11 @@ export default function Sidebar({
   }
 
   return (
-    <div className={`sidebar${open ? '' : ' hidden'}`}>
+    <div
+      className={`sidebar${open ? '' : ' hidden'}`}
+      onDragOver={e => { if (dragTypeRef.current === 'slide') e.preventDefault(); }}
+      onDrop={e => { if (dragTypeRef.current === 'slide') { e.preventDefault(); onDragEnd(); } }}
+    >
       <button className="sidebar-close" onClick={onClose} title="Hide sidebar">◀</button>
 
       {sections.map(sec => {
