@@ -235,7 +235,6 @@ body {
   background: var(--white); border-right: 1px solid var(--gray);
   overflow-y: auto; z-index: 900;
   transition: transform 0.25s cubic-bezier(.4,0,.2,1);
-  display: flex; flex-direction: column;
 }
 .sidebar.hidden { transform: translateX(-100%); }
 .sidebar-close {
@@ -429,8 +428,7 @@ body {
   position: sticky; bottom: 0;
   background: var(--white);
   border-top: 2px solid var(--gray);
-  margin-top: auto; /* push to bottom when content is short */
-  flex-shrink: 0;
+  box-shadow: 0 -2px 8px rgba(0,0,0,.06);
 }
 .sidebar-new-section-btn {
   width: 100%; padding: 10px 16px; text-align: left;
