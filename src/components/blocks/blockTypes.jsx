@@ -81,9 +81,14 @@ export function FieldBlock({ block, onUpdate }) {
 
       {type === 'dropdown' && (
         <div className="mod-field-opts">
-          <button className="mod-field-opts-toggle" onClick={() => setOptsOpen(o => !o)}>
-            {optsOpen ? '▲' : '▼'} {parsedOptions.length > 0 ? `${parsedOptions.length} options` : 'Add options'}
-          </button>
+          <div className="mod-field-opts-header">
+            <button className="mod-field-opts-toggle" onClick={() => setOptsOpen(o => !o)}>
+              {parsedOptions.length > 0 ? `▼ ${parsedOptions.length} options` : '▼ Add options'}
+            </button>
+            {optsOpen && (
+              <button className="mod-field-opts-close" onClick={() => setOptsOpen(false)} title="Close">✕</button>
+            )}
+          </div>
           {optsOpen && (
             <textarea
               className="mod-field-opts-ta"
@@ -91,7 +96,6 @@ export function FieldBlock({ block, onUpdate }) {
               value={options}
               onChange={e => update({ options: e.target.value })}
               placeholder={'Option A\nOption B\nOption C'}
-              onBlur={() => { if (options.trim()) setOptsOpen(false); }}
             />
           )}
         </div>
