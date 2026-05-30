@@ -35,6 +35,7 @@ export default function Sidebar({
   const [dragId, setDragId] = useState(null);
   const [dropInfo, setDropInfo] = useState(null); // { sectionId, slideId, position }
   const [dropEmptySec, setDropEmptySec] = useState(null);
+  const [slideHandleId, setSlideHandleId] = useState(null); // which slide's handle is hovered
 
   // Section drag state
   const [dragSecId, setDragSecId] = useState(null);
@@ -110,7 +111,9 @@ export default function Sidebar({
   // ── Drag handlers ──────────────────────────────────────────────
   // ── Slide drag ──────────────────────────────────────────────────
   function onDragStart(e, slideId) {
+    e.stopPropagation();
     setDragId(slideId);
+    setSlideHandleId(null);
     e.dataTransfer.effectAllowed = 'move';
     e.dataTransfer.setData('text/plain', slideId);
   }
@@ -122,7 +125,7 @@ export default function Sidebar({
   }
 
   function onDragOver(e, sectionId, slideId) {
-    if (dragSecId) return; // section drag in progress — ignore slide events
+    e.stopPropagation(); // never let section-group see slide drag events
     e.preventDefault();
     if (dragId === slideId) return;
     const rect = e.currentTarget.getBoundingClientRect();
@@ -133,7 +136,7 @@ export default function Sidebar({
   }
 
   function onDrop(e, sectionId, slideId) {
-    if (dragSecId) return;
+    e.stopPropagation();
     e.preventDefault();
     if (!dragId || dragId === slideId) { onDragEnd(); return; }
     const sec = sections.find(s => s.id === sectionId);
@@ -250,7 +253,7 @@ export default function Sidebar({
                     <div
                       key={sl.id}
                       className={cls}
-                      draggable
+                      draggable={slideHandleId === sl.id}
                       data-redact-version={redactVersion}
                       data-preread-version={preReadVersion}
                       onClick={() => !isDragging && onNavigate(sl.id)}
@@ -260,7 +263,12 @@ export default function Sidebar({
                       onDragOver={e => onDragOver(e, sec.id, sl.id)}
                       onDrop={e => onDrop(e, sec.id, sl.id)}
                     >
-                      <span className="slide-drag-handle" title="Drag to reorder">⠿</span>
+                      <span
+                        className="slide-drag-handle"
+                        title="Drag to reorder"
+                        onMouseEnter={() => setSlideHandleId(sl.id)}
+                        onMouseLeave={() => setSlideHandleId(null)}
+                      >⠿</span>
                       <span className="slide-item-num">{sl.num}</span>
                       <span className="slide-item-title">{sl.title}</span>
                       <div className="slide-item-badges">
