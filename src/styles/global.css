@@ -319,7 +319,20 @@ body {
 }
 .slide-item-badges { display: flex; align-items: center; gap: 3px; flex-shrink: 0; }
 .slide-item .badge { flex-shrink: 0; }
-/* Drag handle */
+/* Section drag handle */
+.section-drag-handle {
+  color: var(--gray); font-size: 11px; cursor: grab; flex-shrink: 0;
+  opacity: 0; transition: opacity .15s; line-height: 1; padding: 0 4px 0 0;
+}
+.section-header:hover .section-drag-handle { opacity: 1; }
+.section-drag-handle:active { cursor: grabbing; }
+
+/* Section drag-and-drop states */
+.section-group.sg-dragging { opacity: 0.4; }
+.section-group.sg-drop-before { box-shadow: inset 0 2px 0 var(--teal); }
+.section-group.sg-drop-after  { box-shadow: inset 0 -2px 0 var(--teal); }
+
+/* Slide drag handle */
 .slide-drag-handle {
   color: var(--gray); font-size: 11px; cursor: grab; flex-shrink: 0;
   opacity: 0; transition: opacity .15s; line-height: 1; padding: 0 2px;

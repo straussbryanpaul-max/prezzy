@@ -13,14 +13,27 @@ function numConfig(sectionTitle) {
   return m ? { prefix: m[1], base: parseInt(m[2], 10) } : null;
 }
 
+// Reassign section title prefixes based on position among numeric sections,
+// then derive slide nums from each section's new prefix.
 function computeNums(secs) {
-  return secs.map(sec => {
+  // Step 1: renumber section titles sequentially (00.000, 01.000, 02.000 …)
+  let majorIdx = 0;
+  const retitled = secs.map(sec => {
+    if (!numConfig(sec.title)) return sec; // non-numeric section unchanged
+    const prefix = String(majorIdx).padStart(2, '0');
+    majorIdx++;
+    const newTitle = sec.title.replace(/^\d{2}\.\d{3}/, `${prefix}.000`);
+    return { ...sec, title: newTitle };
+  });
+
+  // Step 2: compute slide nums from each section's (now updated) prefix
+  return retitled.map(sec => {
     const cfg = numConfig(sec.title);
     return {
       ...sec,
       slides: sec.slides.map((sl, i) => {
         if (sl.fixedNum) return { ...sl, num: sl.fixedNum };
-        if (cfg) return { ...sl, num: `${cfg.prefix}.${String(cfg.base + i + 1).padStart(3, '0')}` };
+        if (cfg) return { ...sl, num: `${cfg.prefix}.${String(i + 1).padStart(3, '0')}` };
         return { ...sl, num: String(i + 1) };
       }),
     };
@@ -141,6 +154,15 @@ export function reorderSlide(slideId, targetSectionId, targetIdx) {
   if (!targetSec) return;
   targetSec.slides.splice(targetIdx, 0, moved);
 
+  persist(computeNums(secs));
+}
+
+export function reorderSection(sectionId, targetIdx) {
+  const secs = load() || buildDefault();
+  const fromIdx = secs.findIndex(s => s.id === sectionId);
+  if (fromIdx < 0) return;
+  const [moved] = secs.splice(fromIdx, 1);
+  secs.splice(targetIdx, 0, moved);
   persist(computeNums(secs));
 }
 

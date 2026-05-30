@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { lsGet } from '../hooks/useLocalStorage.js';
-import { getSections, addSlide, deleteSlideFromList, reorderSlide, addSection } from '../services/slideList.js';
+import { getSections, addSlide, deleteSlideFromList, reorderSlide, reorderSection, addSection } from '../services/slideList.js';
 
 function isSlideRedacted(id) {
   return lsGet('redact_' + id, '') === 'true';
@@ -31,9 +31,13 @@ export default function Sidebar({
   const addInputRef = useRef(null);
   const sectionInputRef = useRef(null);
 
-  // Drag state
+  // Slide drag state
   const [dragId, setDragId] = useState(null);
-  const [dropInfo, setDropInfo] = useState(null); // { sectionId, slideIdx, position: 'before'|'after' }
+  const [dropInfo, setDropInfo] = useState(null); // { sectionId, slideId, position }
+
+  // Section drag state
+  const [dragSecId, setDragSecId] = useState(null);
+  const [dropSecInfo, setDropSecInfo] = useState(null); // { sectionId, position }
 
   function refresh() {
     setSections(getSections());
@@ -93,10 +97,10 @@ export default function Sidebar({
   }
 
   // ── Drag handlers ──────────────────────────────────────────────
+  // ── Slide drag ──────────────────────────────────────────────────
   function onDragStart(e, slideId) {
     setDragId(slideId);
     e.dataTransfer.effectAllowed = 'move';
-    // Firefox needs some data set
     e.dataTransfer.setData('text/plain', slideId);
   }
 
@@ -106,6 +110,7 @@ export default function Sidebar({
   }
 
   function onDragOver(e, sectionId, slideId) {
+    if (dragSecId) return; // section drag in progress — ignore slide events
     e.preventDefault();
     if (dragId === slideId) return;
     const rect = e.currentTarget.getBoundingClientRect();
@@ -116,18 +121,53 @@ export default function Sidebar({
   }
 
   function onDrop(e, sectionId, slideId) {
+    if (dragSecId) return;
     e.preventDefault();
     if (!dragId || dragId === slideId) { onDragEnd(); return; }
-
     const sec = sections.find(s => s.id === sectionId);
     if (!sec) { onDragEnd(); return; }
-
     let targetIdx = sec.slides.findIndex(s => s.id === slideId);
     if (targetIdx < 0) { onDragEnd(); return; }
     if (dropInfo?.position === 'after') targetIdx += 1;
-
     reorderSlide(dragId, sectionId, targetIdx);
     onDragEnd();
+  }
+
+  // ── Section drag ─────────────────────────────────────────────────
+  function onSecDragStart(e, sectionId) {
+    e.stopPropagation();
+    setDragSecId(sectionId);
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', sectionId);
+  }
+
+  function onSecDragEnd() {
+    setDragSecId(null);
+    setDropSecInfo(null);
+  }
+
+  function onSecDragOver(e, sectionId) {
+    if (dragId) return; // slide drag in progress — ignore
+    e.preventDefault();
+    e.stopPropagation();
+    if (dragSecId === sectionId) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    const position = e.clientY < rect.top + rect.height / 2 ? 'before' : 'after';
+    if (dropSecInfo?.sectionId !== sectionId || dropSecInfo?.position !== position) {
+      setDropSecInfo({ sectionId, position });
+    }
+  }
+
+  function onSecDrop(e, sectionId) {
+    if (dragId) return;
+    e.preventDefault();
+    e.stopPropagation();
+    if (!dragSecId || dragSecId === sectionId) { onSecDragEnd(); return; }
+    let targetIdx = sections.findIndex(s => s.id === sectionId);
+    if (targetIdx < 0) { onSecDragEnd(); return; }
+    if (dropSecInfo?.position === 'after') targetIdx += 1;
+    reorderSection(dragSecId, targetIdx);
+    onSecDragEnd();
   }
 
   return (
@@ -136,12 +176,31 @@ export default function Sidebar({
 
       {sections.map(sec => {
         const isCollapsed = !!collapsed[sec.id];
+        const secDropPos = dropSecInfo?.sectionId === sec.id ? dropSecInfo.position : null;
+        const secCls = [
+          'section-group',
+          dragSecId === sec.id ? 'sg-dragging' : '',
+          secDropPos === 'before' ? 'sg-drop-before' : '',
+          secDropPos === 'after'  ? 'sg-drop-after'  : '',
+        ].filter(Boolean).join(' ');
         return (
-          <div key={sec.id} className="section-group">
+          <div
+            key={sec.id}
+            className={secCls}
+            onDragOver={e => onSecDragOver(e, sec.id)}
+            onDrop={e => onSecDrop(e, sec.id)}
+          >
             <div
               className={`section-header${isCollapsed ? ' collapsed' : ''}`}
-              onClick={() => toggleSection(sec.id)}
+              onClick={() => !dragSecId && toggleSection(sec.id)}
             >
+              <span
+                className="section-drag-handle"
+                title="Drag to reorder section"
+                draggable
+                onDragStart={e => onSecDragStart(e, sec.id)}
+                onDragEnd={onSecDragEnd}
+              >⠿</span>
               <span className="section-header-title">{sec.title}</span>
               <div className="section-header-actions">
                 <button
