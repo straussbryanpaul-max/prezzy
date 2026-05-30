@@ -1,21 +1,39 @@
+import { useState, useEffect } from 'react';
 import { useLocalStorage, useLocalStorageBool } from '../hooks/useLocalStorage.js';
 import { allSlides } from '../data/sections.js';
 import RedactCheck from './RedactCheck.jsx';
 import PreReadCheck from './PreReadCheck.jsx';
 import Assignee from './Assignee.jsx';
+import Comments from './Comments.jsx';
+import { useComments } from '../hooks/useComments.js';
+import { isDeletedInBaseline } from '../services/templates.js';
 
 const SIZE_MAP = { sm: '40%', md: '65%', half: '50%', lg: '100%' };
 
 export default function Card({ slideId, title, num, children, onRedactChange }) {
   const [deleted, setDeletedRaw] = useLocalStorageBool('sec_del_' + slideId, false);
   const [size, setSize] = useLocalStorage('sec_size_' + slideId, 'lg');
+  const [commentsOpen, setCommentsOpen] = useState(false);
+  const { comments, add: addComment, remove: removeComment } = useComments(slideId);
+
+  // Re-render when the current template changes so isDeletedInBaseline is re-evaluated.
+  const [, setTemplateVersion] = useState(0);
+  useEffect(() => {
+    const bump = () => setTemplateVersion(v => v + 1);
+    window.addEventListener('current-template-change', bump);
+    return () => window.removeEventListener('current-template-change', bump);
+  }, []);
+
+  // Close the comments panel when navigating to a different slide.
+  useEffect(() => {
+    setCommentsOpen(false);
+  }, [slideId]);
 
   function setDeleted(v) {
     setDeletedRaw(v);
     window.dispatchEvent(new Event('drift-state-change'));
   }
 
-  // Pre-read: defaults from template, can be overridden via checkbox.
   const slide = allSlides.find(s => s.id === slideId);
   const templateDefault = !!slide?.preread;
   const [preread, setPrereadRaw] = useLocalStorageBool('preread_' + slideId, templateDefault);
@@ -26,6 +44,8 @@ export default function Card({ slideId, title, num, children, onRedactChange }) 
   }
 
   if (deleted) {
+    // Deletion is canonical (baked into the current template) — hide completely.
+    if (isDeletedInBaseline(slideId)) return null;
     return (
       <div className="deleted-section-ghost" onClick={() => setDeleted(false)}>
         <span>🗑 Section "{title}" deleted</span>
@@ -71,11 +91,21 @@ export default function Card({ slideId, title, num, children, onRedactChange }) 
             <Assignee slideId={slideId} />
           </div>
           <div className="card-header-checks">
+            <button
+              className={`comment-toggle${commentsOpen ? ' active' : ''}${comments.length > 0 ? ' has-comments' : ''}`}
+              onClick={() => setCommentsOpen(o => !o)}
+              title={commentsOpen ? 'Hide comments' : 'Show comments'}
+            >
+              💬{comments.length > 0 && <span className="comment-count-badge">{comments.length}</span>}
+            </button>
             <PreReadCheck checked={preread} onChange={setPreread} />
             <RedactCheck slideId={slideId} onChange={onRedactChange} />
           </div>
         </div>
         <div className="card-body">{children}</div>
+        {commentsOpen && (
+          <Comments comments={comments} onAdd={addComment} onRemove={removeComment} />
+        )}
       </div>
     </div>
   );

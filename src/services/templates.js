@@ -18,6 +18,7 @@ const PRESERVE_KEYS = new Set([
   'showRedacted',
   'sidebarOpen',
   'ai_extract_instr',
+  'commenter_name',
   CURRENT_TEMPLATE_KEY,
 ]);
 
@@ -38,6 +39,7 @@ function shouldCapture(key) {
   if (!key) return false;
   if (PRESERVE_KEYS.has(key)) return false;
   if (key === TEMPLATES_KEY) return false;
+  if (key.startsWith('comments_')) return false;
   return true;
 }
 
@@ -148,6 +150,13 @@ export function resetToBlank() {
     window.localStorage.removeItem(k);
   }
   setCurrentTemplateName('');
+}
+
+export function isDeletedInBaseline(slideId) {
+  const name = getCurrentTemplateName();
+  if (!name) return false;
+  const tpl = listTemplates()[name];
+  return tpl?.data?.['sec_del_' + slideId] === 'true';
 }
 
 // Rough size in KB, useful for the UI.
