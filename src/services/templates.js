@@ -159,6 +159,13 @@ export function isDeletedInBaseline(slideId) {
   return tpl?.data?.['sec_del_' + slideId] === 'true';
 }
 
+export function isChunkDeletedInBaseline(chunkId) {
+  const name = getCurrentTemplateName();
+  if (!name) return false;
+  const tpl = listTemplates()[name];
+  return tpl?.data?.['chunk_del_' + chunkId] === 'true';
+}
+
 // Rough size in KB, useful for the UI.
 export function templateSizeKB(template) {
   try {

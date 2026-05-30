@@ -1,10 +1,19 @@
+import { useState, useEffect } from 'react';
 import { useLocalStorage, useLocalStorageBool } from '../hooks/useLocalStorage.js';
+import { isChunkDeletedInBaseline } from '../services/templates.js';
 
 const SIZE_MAP = { sm: '40%', md: '65%', half: '50%', lg: '100%' };
 
 export default function EditableChunk({ id, label, children }) {
   const [deleted, setDeletedRaw] = useLocalStorageBool('chunk_del_' + id, false);
   const [size, setSize] = useLocalStorage('chunk_size_' + id, 'lg');
+
+  const [, setTemplateVersion] = useState(0);
+  useEffect(() => {
+    const bump = () => setTemplateVersion(v => v + 1);
+    window.addEventListener('current-template-change', bump);
+    return () => window.removeEventListener('current-template-change', bump);
+  }, []);
 
   function setDeleted(v) {
     setDeletedRaw(v);
@@ -20,6 +29,7 @@ export default function EditableChunk({ id, label, children }) {
   }
 
   if (deleted) {
+    if (isChunkDeletedInBaseline(id)) return null;
     return (
       <div className="deleted-chunk-ghost" onClick={() => setDeleted(false)}>
         <span>🗑 {label || 'Element'} deleted</span>
