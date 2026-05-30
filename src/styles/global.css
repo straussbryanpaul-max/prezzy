@@ -303,6 +303,13 @@ body {
 }
 .section-header:hover .section-add-btn { opacity: 1; }
 .section-add-btn:hover { color: var(--teal) !important; }
+.section-del-btn {
+  background: none; border: none; color: var(--gray2); cursor: pointer;
+  font-size: 14px; line-height: 1; padding: 1px 4px; border-radius: 3px;
+  font-family: inherit; opacity: 0; transition: opacity .15s, color .15s;
+}
+.section-header:hover .section-del-btn { opacity: 1; }
+.section-del-btn:hover { color: var(--red) !important; }
 
 .section-items { padding: 0; }
 .slide-item {

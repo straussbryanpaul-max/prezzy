@@ -157,6 +157,16 @@ export function reorderSlide(slideId, targetSectionId, targetIdx) {
   persist(computeNums(secs));
 }
 
+export function deleteSection(sectionId) {
+  const secs = load() || buildDefault();
+  const sec = secs.find(s => s.id === sectionId);
+  if (!sec) return;
+  for (const sl of sec.slides) {
+    if (sl.isCustom) deleteCustomSlide(sl.id);
+  }
+  persist(computeNums(secs.filter(s => s.id !== sectionId)));
+}
+
 export function reorderSection(sectionId, targetIdx) {
   const secs = load() || buildDefault();
   const fromIdx = secs.findIndex(s => s.id === sectionId);

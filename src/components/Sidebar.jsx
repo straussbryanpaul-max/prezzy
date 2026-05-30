@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { lsGet } from '../hooks/useLocalStorage.js';
-import { getSections, addSlide, deleteSlideFromList, reorderSlide, reorderSection, addSection } from '../services/slideList.js';
+import { getSections, addSlide, deleteSlideFromList, reorderSlide, reorderSection, deleteSection, addSection } from '../services/slideList.js';
 
 function isSlideRedacted(id) {
   return lsGet('redact_' + id, '') === 'true';
@@ -84,6 +84,16 @@ export default function Sidebar({
   function onAddKeyDown(e, sectionId) {
     if (e.key === 'Enter') confirmAdd(sectionId);
     if (e.key === 'Escape') setAddingTo(null);
+  }
+
+  function onDeleteSection(sec, e) {
+    e.stopPropagation();
+    const slideCount = sec.slides.length;
+    const label = slideCount > 0
+      ? `Delete section "${sec.title}" and its ${slideCount} slide${slideCount !== 1 ? 's' : ''}?`
+      : `Delete section "${sec.title}"?`;
+    if (!confirm(label)) return;
+    deleteSection(sec.id);
   }
 
   function onDeleteSlide(sl, e) {
@@ -208,6 +218,11 @@ export default function Sidebar({
                   title="Add slide to this section"
                   onClick={e => openAddForm(sec.id, e)}
                 >+</button>
+                <button
+                  className="section-del-btn"
+                  title="Delete this section"
+                  onClick={e => onDeleteSection(sec, e)}
+                >×</button>
                 <span className="arrow">▼</span>
               </div>
             </div>
@@ -293,7 +308,7 @@ export default function Sidebar({
             <input
               ref={sectionInputRef}
               className="slide-add-input"
-              placeholder="Section title… (e.g. 09.000 My Section)"
+              placeholder="Section name…"
               value={sectionDraft}
               onChange={e => setSectionDraft(e.target.value)}
               onKeyDown={e => {
