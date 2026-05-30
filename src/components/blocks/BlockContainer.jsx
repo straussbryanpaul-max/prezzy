@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react';
 import Block from './Block.jsx';
-import { TextBlock, HeadingBlock, FieldBlock, FormSectionBlock, TableBlock, ImageBlock, FileBlock, PowerBIBlock, ShapeBlock } from './blockTypes.jsx';
+import { TextBlock, HeadingBlock, FieldBlock, FormSectionBlock, TableBlock, ImageBlock, FileBlock, EmbedBlock, PowerBIBlock, ShapeBlock } from './blockTypes.jsx';
 
 const TYPE_COMPONENTS = {
   text: TextBlock,
@@ -10,6 +10,7 @@ const TYPE_COMPONENTS = {
   table: TableBlock,
   image: ImageBlock,
   file: FileBlock,
+  embed: EmbedBlock,
   pbi: PowerBIBlock,
   shape: ShapeBlock,
 };

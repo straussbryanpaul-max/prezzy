@@ -461,6 +461,99 @@ export function TableBlock({ block, onUpdate }) {
   );
 }
 
+// ─── EMBED FILE BLOCK ────────────────────────────────────────────────────────
+
+export function EmbedBlock({ block, onUpdate }) {
+  const [over, setOver]           = useState(false);
+  const [localHeight, setLocalHeight] = useState(null);
+  const inputRef = useRef(null);
+  const data = block.data || {};
+
+  const src      = data.src      || '';
+  const name     = data.name     || '';
+  const type     = data.type     || '';
+  const height   = data.height   || 500;
+  const viewMode = data.viewMode || 'embed';
+  const isPDF    = type === 'application/pdf';
+  const displayHeight = localHeight ?? height;
+
+  function persist(patch) { onUpdate(block.id, { ...data, ...patch }); }
+
+  function loadFile(file) {
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) {
+      alert(`File is ${(file.size / 1048576).toFixed(1)} MB — max 5 MB for embedded files.`);
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = ev => persist({ src: ev.target.result, name: file.name, type: file.type, size: file.size });
+    reader.readAsDataURL(file);
+  }
+
+  function handleResize(e) {
+    e.preventDefault();
+    const startY = e.clientY, startH = displayHeight;
+    let h = startH;
+    const onMove = ev => { h = Math.max(200, Math.min(1500, Math.round(startH + ev.clientY - startY))); setLocalHeight(h); };
+    const onUp   = () => { persist({ height: h }); document.removeEventListener('mousemove', onMove); document.removeEventListener('mouseup', onUp); document.body.style.cursor = ''; document.body.style.userSelect = ''; };
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onUp);
+    document.body.style.cursor = 'ns-resize';
+    document.body.style.userSelect = 'none';
+  }
+
+  if (!src) {
+    return (
+      <div
+        className={`mod-embed-drop${over ? ' over' : ''}`}
+        onDrop={e => { e.preventDefault(); setOver(false); loadFile(e.dataTransfer.files?.[0]); }}
+        onDragOver={e => { e.preventDefault(); setOver(true); }}
+        onDragLeave={() => setOver(false)}
+        onClick={() => inputRef.current?.click()}
+      >
+        <input ref={inputRef} type="file" style={{ display: 'none' }} onChange={e => loadFile(e.target.files?.[0])} />
+        <div className="mod-embed-drop-ico">📄</div>
+        <p><strong>Click or drag a file to embed</strong></p>
+        <p className="mod-embed-hint">PDFs display inline · other files show as an open/download link</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="mod-embed-wrap">
+      <div className="mod-embed-bar">
+        <span className="mod-embed-bar-icon">{isPDF ? '📄' : '📎'}</span>
+        <span className="mod-embed-bar-name" title={name}>{name}</span>
+        <span className="mod-embed-bar-size">{fmt(data.size || 0)}</span>
+        {isPDF && (
+          <div className="mod-embed-view-toggle">
+            <button className={`mod-embed-view-btn${viewMode === 'embed' ? ' active' : ''}`} onClick={() => persist({ viewMode: 'embed' })}>Embed</button>
+            <button className={`mod-embed-view-btn${viewMode === 'link'  ? ' active' : ''}`} onClick={() => persist({ viewMode: 'link'  })}>Link only</button>
+          </div>
+        )}
+        <div className="mod-embed-actions">
+          <a href={src} target="_blank" rel="noopener noreferrer" className="mod-embed-action-btn">↗ Open</a>
+          <a href={src} download={name} className="mod-embed-action-btn">⬇ Download</a>
+          <button className="mod-embed-action-btn" onClick={() => inputRef.current?.click()}>↻ Replace</button>
+          <button className="mod-embed-action-btn mod-embed-clear" onClick={() => { if (confirm('Remove this file?')) persist({ src: '', name: '', type: '', size: 0 }); }}>✕ Remove</button>
+        </div>
+        <input ref={inputRef} type="file" style={{ display: 'none' }} onChange={e => loadFile(e.target.files?.[0])} />
+      </div>
+
+      {isPDF && viewMode === 'embed' && (
+        <div className="mod-embed-viewer-wrap">
+          <div className="mod-embed-viewer" style={{ height: `${displayHeight}px` }}>
+            <embed src={src} type="application/pdf" width="100%" height="100%" style={{ display: 'block', border: 'none' }} />
+          </div>
+          <div className="mod-embed-resize-handle" onMouseDown={handleResize} title="Drag to resize">
+            <div className="mod-embed-resize-grip">⋯</div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── IMAGE / FILE / POWERBI / SHAPE ──────────────────────────────────────────
 // (unchanged from original)
 

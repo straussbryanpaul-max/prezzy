@@ -9,6 +9,7 @@ export default function BlockToolbar({ onAdd, onClose }) {
       <button className="tb-add-btn" onClick={() => onAdd('table')}>📊 Table</button>
       <div className="tb-divider" />
       <button className="tb-add-btn" onClick={() => onAdd('image')}>🖼️ Image</button>
+      <button className="tb-add-btn" onClick={() => onAdd('embed')}>📄 Embed File</button>
       <button className="tb-add-btn" onClick={() => onAdd('file')}>📎 File</button>
       <button className="tb-add-btn" onClick={() => onAdd('pbi')}>⚡ Power BI</button>
       <button className="tb-add-btn" onClick={() => onAdd('shape')}>🎨 Shape</button>
