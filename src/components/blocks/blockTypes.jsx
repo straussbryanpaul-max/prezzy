@@ -148,6 +148,124 @@ export function FieldBlock({ block, onUpdate }) {
   );
 }
 
+// ─── FORM SECTION BLOCK ──────────────────────────────────────────────────────
+
+export function FormSectionBlock({ block, onUpdate }) {
+  const data   = block.data || {};
+  const cols   = data.cols   || 2;
+  const fields = data.fields || [];
+  const [editingOpts, setEditingOpts] = useState(null);
+
+  function persist(patch) {
+    onUpdate(block.id, { ...data, ...patch });
+  }
+
+  function addField() {
+    persist({ fields: [...fields, { id: 'fld_' + Date.now(), label: 'Field', type: 'text', value: '', options: '' }] });
+  }
+
+  function removeField(id) {
+    persist({ fields: fields.filter(f => f.id !== id) });
+    if (editingOpts === id) setEditingOpts(null);
+  }
+
+  function updateField(id, patch) {
+    persist({ fields: fields.map(f => f.id === id ? { ...f, ...patch } : f) });
+  }
+
+  function setFieldType(id, type) {
+    updateField(id, { type });
+    if (type !== 'dropdown' && editingOpts === id) setEditingOpts(null);
+  }
+
+  return (
+    <div className="mod-fsb-wrap">
+      <div className="mod-fsb-header">
+        <span
+          contentEditable
+          suppressContentEditableWarning
+          className="mod-fsb-title"
+          data-placeholder="Section title…"
+          onBlur={e => persist({ title: e.currentTarget.textContent.trim() })}
+          ref={el => { if (el && !el.matches?.(':focus')) el.textContent = data.title || ''; }}
+        />
+        <div className="mod-fsb-cols">
+          <button className={`mod-fsb-col-btn${cols === 1 ? ' active' : ''}`} onClick={() => persist({ cols: 1 })}>1 col</button>
+          <button className={`mod-fsb-col-btn${cols === 2 ? ' active' : ''}`} onClick={() => persist({ cols: 2 })}>2 col</button>
+        </div>
+      </div>
+
+      <div className="mod-fsb-grid" style={{ gridTemplateColumns: `repeat(${cols}, 1fr)` }}>
+        {fields.map(f => {
+          const parsedOpts = (f.options || '').split('\n').map(o => o.trim()).filter(Boolean);
+          return (
+            <div key={f.id} className="mod-fsb-field">
+              <div className="mod-fsb-field-top">
+                <span
+                  contentEditable
+                  suppressContentEditableWarning
+                  className="mod-fsb-field-label"
+                  data-placeholder="Label"
+                  onBlur={e => updateField(f.id, { label: e.currentTarget.textContent.trim() || 'Field' })}
+                  ref={el => { if (el && !el.matches?.(':focus')) el.textContent = f.label || ''; }}
+                />
+                <div className="mod-fsb-controls">
+                  {FIELD_TYPES.map(t => (
+                    <button
+                      key={t.key}
+                      className={`mod-fsb-type-btn${f.type === t.key ? ' active' : ''}`}
+                      onClick={() => setFieldType(f.id, t.key)}
+                      title={t.label}
+                    >{t.icon}</button>
+                  ))}
+                  {f.type === 'dropdown' && (
+                    <button
+                      className={`mod-fsb-type-btn${editingOpts === f.id ? ' active' : ''}`}
+                      onClick={() => setEditingOpts(editingOpts === f.id ? null : f.id)}
+                      title="Edit options"
+                    >{parsedOpts.length > 0 ? `${parsedOpts.length}↓` : '+↓'}</button>
+                  )}
+                  <button className="mod-fsb-del-btn" onClick={() => removeField(f.id)} title="Remove field">✕</button>
+                </div>
+              </div>
+
+              {f.type === 'dropdown' && editingOpts === f.id && (
+                <div className="mod-fsb-opts-panel">
+                  <div className="mod-fsb-opts-header">
+                    <span>Options — one per line</span>
+                    <button onClick={() => setEditingOpts(null)}>✕</button>
+                  </div>
+                  <textarea
+                    className="mod-fsb-opts-ta"
+                    rows={3}
+                    value={f.options || ''}
+                    onChange={e => updateField(f.id, { options: e.target.value })}
+                    placeholder={'Option A\nOption B\nOption C'}
+                  />
+                </div>
+              )}
+
+              <div className="mod-fsb-value">
+                {f.type === 'text'     && <input type="text"   value={f.value || ''} onChange={e => updateField(f.id, { value: e.target.value })} placeholder="—" />}
+                {f.type === 'number'   && <input type="number" value={f.value || ''} onChange={e => updateField(f.id, { value: e.target.value })} />}
+                {f.type === 'date'     && <input type="date"   value={f.value || ''} onChange={e => updateField(f.id, { value: e.target.value })} />}
+                {f.type === 'dropdown' && (
+                  <select value={f.value || ''} onChange={e => updateField(f.id, { value: e.target.value })}>
+                    <option value="">— Select —</option>
+                    {parsedOpts.map((o, i) => <option key={i} value={o}>{o}</option>)}
+                  </select>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      <button className="mod-fsb-add" onClick={addField}>+ Add field</button>
+    </div>
+  );
+}
+
 // ─── TABLE BLOCK ─────────────────────────────────────────────────────────────
 
 function defaultHeaders(n) {

@@ -5,6 +5,7 @@ export default function BlockToolbar({ onAdd, onClose }) {
       <button className="tb-add-btn" onClick={() => onAdd('heading')}>🔤 Heading</button>
       <button className="tb-add-btn" onClick={() => onAdd('text')}>📝 Text</button>
       <button className="tb-add-btn" onClick={() => onAdd('field')}>📋 Field</button>
+      <button className="tb-add-btn" onClick={() => onAdd('formsection')}>🗂 Form Section</button>
       <button className="tb-add-btn" onClick={() => onAdd('table')}>📊 Table</button>
       <div className="tb-divider" />
       <button className="tb-add-btn" onClick={() => onAdd('image')}>🖼️ Image</button>
