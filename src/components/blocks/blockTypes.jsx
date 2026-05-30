@@ -711,11 +711,11 @@ export function PowerBIBlock({ block, onUpdate }) {
   return (
     <div className="mod-pbi-wrap" ref={wrapRef}>
       <div className="pbi-header">
-        <span className="pbi-title">⚡ Power BI Live Embed</span>
+        <span className="pbi-title">🌐 Live Embed</span>
         <button className="pbi-cog" onClick={() => setShowSettings(s => !s)}>⚙ {showSettings ? 'Hide' : 'Settings'}</button>
       </div>
       <div className="pbi-input-row">
-        <input type="text" placeholder="https://app.powerbi.com/reportEmbed?reportId=…" value={url} onChange={e => setUrl(e.target.value)} />
+        <input type="text" placeholder="Paste an embed URL — Power BI, SharePoint Excel, Google Sheets, or any iframe src…" value={url} onChange={e => setUrl(e.target.value)} />
         <button onClick={preview}>▶ Preview</button>
       </div>
       {showSettings && (
@@ -748,9 +748,11 @@ export function PowerBIBlock({ block, onUpdate }) {
           ) : (
             <div className="pbi-embed-ph">
               <div style={{ fontSize: 36, marginBottom: 8 }}>📊</div>
-              <div style={{ fontWeight: 700, fontSize: 14, color: '#fff', marginBottom: 6 }}>Paste a Power BI embed URL above</div>
-              <div style={{ fontSize: 11, opacity: 0.7, lineHeight: 1.6, maxWidth: 320, textAlign: 'center' }}>
-                Use the report's <strong>Publish to web</strong> URL or <strong>Embed for your organization</strong> link.
+              <div style={{ fontWeight: 700, fontSize: 14, color: '#fff', marginBottom: 6 }}>Paste an embed URL above</div>
+              <div style={{ fontSize: 11, opacity: 0.7, lineHeight: 1.6, maxWidth: 340, textAlign: 'center' }}>
+                <strong>Power BI</strong> — Publish to web or Embed link<br />
+                <strong>SharePoint Excel</strong> — Share → Embed → iframe src<br />
+                <strong>Google Sheets</strong> — File → Share → Publish to web → Embed
               </div>
             </div>
           )}

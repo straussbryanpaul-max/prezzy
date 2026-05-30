@@ -2147,7 +2147,7 @@ thead .mod-table-row-gutter { background: var(--navy); border: none; }
     height: 240px;
   }
   .mod-pbi-wrap::after {
-    content: "📊 Power BI live embed — open in browser for interactive view";
+    content: "🌐 Live embed — open in browser for interactive view";
     display: block;
     padding: 24px;
     background: #F4F6F9;

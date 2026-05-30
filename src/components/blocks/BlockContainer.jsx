@@ -23,7 +23,7 @@ const INSERT_TYPES = [
   { type: 'table',       icon: '📊', label: 'Table' },
   { type: 'image',       icon: '🖼️', label: 'Image' },
   { type: 'embed',       icon: '📄', label: 'Embed File' },
-  { type: 'pbi',         icon: '⚡', label: 'Power BI' },
+  { type: 'pbi',         icon: '🌐', label: 'Live Embed' },
   { type: 'file',        icon: '📎', label: 'File' },
   { type: 'shape',       icon: '🎨', label: 'Shape' },
 ];
