@@ -35,7 +35,7 @@ export default function Sidebar({
   const [dragId, setDragId] = useState(null);
   const [dropInfo, setDropInfo] = useState(null); // { sectionId, slideId, position }
   const [dropEmptySec, setDropEmptySec] = useState(null);
-  const [slideHandleId, setSlideHandleId] = useState(null); // which slide's handle is hovered
+  const dragTypeRef = useRef(null); // 'slide' | 'section' — synchronous, no async state lag
 
   // Section drag state
   const [dragSecId, setDragSecId] = useState(null);
@@ -112,20 +112,21 @@ export default function Sidebar({
   // ── Slide drag ──────────────────────────────────────────────────
   function onDragStart(e, slideId) {
     e.stopPropagation();
+    dragTypeRef.current = 'slide';
     setDragId(slideId);
-    setSlideHandleId(null);
     e.dataTransfer.effectAllowed = 'move';
     e.dataTransfer.setData('text/plain', slideId);
   }
 
   function onDragEnd() {
+    dragTypeRef.current = null;
     setDragId(null);
     setDropInfo(null);
     setDropEmptySec(null);
   }
 
   function onDragOver(e, sectionId, slideId) {
-    e.stopPropagation(); // never let section-group see slide drag events
+    e.stopPropagation();
     e.preventDefault();
     if (dragId === slideId) return;
     const rect = e.currentTarget.getBoundingClientRect();
@@ -151,18 +152,20 @@ export default function Sidebar({
   // ── Section drag ─────────────────────────────────────────────────
   function onSecDragStart(e, sectionId) {
     e.stopPropagation();
+    dragTypeRef.current = 'section';
     setDragSecId(sectionId);
     e.dataTransfer.effectAllowed = 'move';
     e.dataTransfer.setData('text/plain', sectionId);
   }
 
   function onSecDragEnd() {
+    dragTypeRef.current = null;
     setDragSecId(null);
     setDropSecInfo(null);
   }
 
   function onSecDragOver(e, sectionId) {
-    if (dragId) return; // slide drag in progress — ignore
+    if (dragTypeRef.current !== 'section') return; // only handle section drags
     e.preventDefault();
     e.stopPropagation();
     if (dragSecId === sectionId) return;
@@ -174,7 +177,7 @@ export default function Sidebar({
   }
 
   function onSecDrop(e, sectionId) {
-    if (dragId) return;
+    if (dragTypeRef.current !== 'section') return;
     e.preventDefault();
     e.stopPropagation();
     if (!dragSecId || dragSecId === sectionId) { onSecDragEnd(); return; }
@@ -253,7 +256,7 @@ export default function Sidebar({
                     <div
                       key={sl.id}
                       className={cls}
-                      draggable={slideHandleId === sl.id}
+                      draggable
                       data-redact-version={redactVersion}
                       data-preread-version={preReadVersion}
                       onClick={() => !isDragging && onNavigate(sl.id)}
@@ -263,12 +266,7 @@ export default function Sidebar({
                       onDragOver={e => onDragOver(e, sec.id, sl.id)}
                       onDrop={e => onDrop(e, sec.id, sl.id)}
                     >
-                      <span
-                        className="slide-drag-handle"
-                        title="Drag to reorder"
-                        onMouseEnter={() => setSlideHandleId(sl.id)}
-                        onMouseLeave={() => setSlideHandleId(null)}
-                      >⠿</span>
+                      <span className="slide-drag-handle" title="Drag to reorder">⠿</span>
                       <span className="slide-item-num">{sl.num}</span>
                       <span className="slide-item-title">{sl.title}</span>
                       <div className="slide-item-badges">

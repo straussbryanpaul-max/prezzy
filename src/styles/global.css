@@ -328,10 +328,10 @@ body {
 .slide-item .badge { flex-shrink: 0; }
 /* Section drag handle */
 .section-drag-handle {
-  color: var(--gray); font-size: 11px; cursor: grab; flex-shrink: 0;
-  opacity: 0; transition: opacity .15s; line-height: 1; padding: 0 4px 0 0;
+  color: var(--gray2); font-size: 11px; cursor: grab; flex-shrink: 0;
+  opacity: 0.4; transition: opacity .15s; line-height: 1; padding: 0 4px 0 0;
 }
-.section-header:hover .section-drag-handle { opacity: 1; }
+.section-header:hover .section-drag-handle { opacity: 0.9; }
 .section-drag-handle:active { cursor: grabbing; }
 
 /* Section drag-and-drop states */
@@ -341,11 +341,10 @@ body {
 
 /* Slide drag handle */
 .slide-drag-handle {
-  color: var(--gray); font-size: 11px; cursor: grab; flex-shrink: 0;
-  opacity: 0; transition: opacity .15s; line-height: 1; padding: 0 2px;
-  margin-left: -4px;
+  color: var(--gray2); font-size: 11px; cursor: grab; flex-shrink: 0;
+  opacity: 0.35; transition: opacity .15s; line-height: 1; padding: 0 3px;
 }
-.slide-item:hover .slide-drag-handle { opacity: 1; }
+.slide-item:hover .slide-drag-handle { opacity: 0.85; }
 .slide-drag-handle:active { cursor: grabbing; }
 
 .slide-item-del {
