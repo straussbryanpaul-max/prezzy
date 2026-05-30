@@ -2625,7 +2625,7 @@ thead .mod-table-row-gutter { background: var(--navy); border: none; }
   display: none;
   position: absolute;
   top: -14px;
-  right: 12px;
+  left: 12px;
   background: var(--navy);
   border: 1px solid rgba(255,255,255,.18);
   border-radius: 20px;
