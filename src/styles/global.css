@@ -2216,7 +2216,13 @@ thead .mod-table-row-gutter { background: var(--navy); border: none; }
 }
 .mod-field-type-btn:hover { border-color: var(--blue); color: var(--blue); background: #EFF6FF; }
 .mod-field-type-btn.active { background: var(--navy); color: #fff; border-color: var(--navy); }
-.mod-field-opts { display: flex; flex-direction: column; gap: 4px; padding: 8px 14px; border-bottom: 1px solid var(--gray); background: #fffbf0; }
+.mod-field-opts { display: flex; flex-direction: column; gap: 6px; padding: 8px 14px; border-bottom: 1px solid var(--gray); background: #fffbf0; }
+.mod-field-opts-toggle {
+  background: none; border: none; cursor: pointer; font-family: inherit;
+  font-size: 11px; font-weight: 600; color: var(--gray3); text-align: left;
+  padding: 0; transition: color .15s;
+}
+.mod-field-opts-toggle:hover { color: var(--navy); }
 .mod-field-opts-label {
   font-size: 10px; font-weight: 700; color: var(--gray3);
   text-transform: uppercase; letter-spacing: 0.5px;

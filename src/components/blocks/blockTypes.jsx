@@ -50,6 +50,7 @@ export function FieldBlock({ block, onUpdate }) {
   const type = data.type || 'text';
   const options = data.options || '';
   const parsedOptions = options.split('\n').map(o => o.trim()).filter(Boolean);
+  const [optsOpen, setOptsOpen] = useState(() => !options.trim());
 
   function update(patch) {
     onUpdate(block.id, { ...data, ...patch });
@@ -80,14 +81,19 @@ export function FieldBlock({ block, onUpdate }) {
 
       {type === 'dropdown' && (
         <div className="mod-field-opts">
-          <div className="mod-field-opts-label">Dropdown options — one per line</div>
-          <textarea
-            className="mod-field-opts-ta"
-            rows={3}
-            value={options}
-            onChange={e => update({ options: e.target.value })}
-            placeholder={'Option A\nOption B\nOption C'}
-          />
+          <button className="mod-field-opts-toggle" onClick={() => setOptsOpen(o => !o)}>
+            {optsOpen ? '▲' : '▼'} {parsedOptions.length > 0 ? `${parsedOptions.length} options` : 'Add options'}
+          </button>
+          {optsOpen && (
+            <textarea
+              className="mod-field-opts-ta"
+              rows={3}
+              value={options}
+              onChange={e => update({ options: e.target.value })}
+              placeholder={'Option A\nOption B\nOption C'}
+              onBlur={() => { if (options.trim()) setOptsOpen(false); }}
+            />
+          )}
         </div>
       )}
 
