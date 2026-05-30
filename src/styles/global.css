@@ -319,6 +319,15 @@ body {
 }
 .slide-item-badges { display: flex; align-items: center; gap: 3px; flex-shrink: 0; }
 .slide-item .badge { flex-shrink: 0; }
+/* Drag handle */
+.slide-drag-handle {
+  color: var(--gray); font-size: 11px; cursor: grab; flex-shrink: 0;
+  opacity: 0; transition: opacity .15s; line-height: 1; padding: 0 2px;
+  margin-left: -4px;
+}
+.slide-item:hover .slide-drag-handle { opacity: 1; }
+.slide-drag-handle:active { cursor: grabbing; }
+
 .slide-item-del {
   background: none; border: none; color: var(--gray2); cursor: pointer;
   font-size: 13px; line-height: 1; padding: 2px 5px; border-radius: 3px;
@@ -327,6 +336,11 @@ body {
 }
 .slide-item:hover .slide-item-del { opacity: 1; }
 .slide-item-del:hover { color: var(--red) !important; }
+
+/* Drag-and-drop states */
+.slide-item.si-dragging { opacity: 0.4; }
+.slide-item.si-drop-before { box-shadow: inset 0 2px 0 var(--teal); }
+.slide-item.si-drop-after  { box-shadow: inset 0 -2px 0 var(--teal); }
 
 .slide-item:hover { background: var(--light); color: var(--navy); }
 .slide-item.active {

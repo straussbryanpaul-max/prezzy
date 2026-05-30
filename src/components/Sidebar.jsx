@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { lsGet } from '../hooks/useLocalStorage.js';
-import { getSections, addSlide, deleteSlideFromList } from '../services/slideList.js';
+import { getSections, addSlide, deleteSlideFromList, reorderSlide } from '../services/slideList.js';
 
 function isSlideRedacted(id) {
   return lsGet('redact_' + id, '') === 'true';
@@ -23,10 +23,14 @@ export default function Sidebar({
 }) {
   const [sections, setSections] = useState(() => getSections());
   const [collapsed, setCollapsed] = useState({});
-  const [addingTo, setAddingTo] = useState(null); // sectionId currently adding to
+  const [addingTo, setAddingTo] = useState(null);
   const [addDraft, setAddDraft] = useState('');
   const [, forceRerender] = useState(0);
   const addInputRef = useRef(null);
+
+  // Drag state
+  const [dragId, setDragId] = useState(null);
+  const [dropInfo, setDropInfo] = useState(null); // { sectionId, slideIdx, position: 'before'|'after' }
 
   function refresh() {
     setSections(getSections());
@@ -81,6 +85,44 @@ export default function Sidebar({
     if (sl.id === activeSlideId) onNavigate('cover');
   }
 
+  // ── Drag handlers ──────────────────────────────────────────────
+  function onDragStart(e, slideId) {
+    setDragId(slideId);
+    e.dataTransfer.effectAllowed = 'move';
+    // Firefox needs some data set
+    e.dataTransfer.setData('text/plain', slideId);
+  }
+
+  function onDragEnd() {
+    setDragId(null);
+    setDropInfo(null);
+  }
+
+  function onDragOver(e, sectionId, slideId) {
+    e.preventDefault();
+    if (dragId === slideId) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    const position = e.clientY < rect.top + rect.height / 2 ? 'before' : 'after';
+    if (dropInfo?.sectionId !== sectionId || dropInfo?.slideId !== slideId || dropInfo?.position !== position) {
+      setDropInfo({ sectionId, slideId, position });
+    }
+  }
+
+  function onDrop(e, sectionId, slideId) {
+    e.preventDefault();
+    if (!dragId || dragId === slideId) { onDragEnd(); return; }
+
+    const sec = sections.find(s => s.id === sectionId);
+    if (!sec) { onDragEnd(); return; }
+
+    let targetIdx = sec.slides.findIndex(s => s.id === slideId);
+    if (targetIdx < 0) { onDragEnd(); return; }
+    if (dropInfo?.position === 'after') targetIdx += 1;
+
+    reorderSlide(dragId, sectionId, targetIdx);
+    onDragEnd();
+  }
+
   return (
     <div className={`sidebar${open ? '' : ' hidden'}`}>
       <button className="sidebar-close" onClick={onClose} title="Hide sidebar">◀</button>
@@ -109,18 +151,33 @@ export default function Sidebar({
                 {sec.slides.map(sl => {
                   const redacted = sl.redacted || isSlideRedacted(sl.id);
                   const preread = isSlidePreRead(sl);
-                  const cls =
-                    (sl.id === activeSlideId ? 'active ' : '') +
-                    (redacted && !showRedacted ? 'redacted-item ' : '');
+                  const isDragging = dragId === sl.id;
+                  const dropPos = dropInfo?.sectionId === sec.id && dropInfo?.slideId === sl.id
+                    ? dropInfo.position : null;
+                  const cls = [
+                    'slide-item',
+                    sl.id === activeSlideId ? 'active' : '',
+                    redacted && !showRedacted ? 'redacted-item' : '',
+                    isDragging ? 'si-dragging' : '',
+                    dropPos === 'before' ? 'si-drop-before' : '',
+                    dropPos === 'after' ? 'si-drop-after' : '',
+                  ].filter(Boolean).join(' ');
+
                   return (
                     <div
                       key={sl.id}
-                      className={`slide-item ${cls}`}
+                      className={cls}
+                      draggable
                       data-redact-version={redactVersion}
                       data-preread-version={preReadVersion}
-                      onClick={() => onNavigate(sl.id)}
+                      onClick={() => !isDragging && onNavigate(sl.id)}
                       title={`${sl.num} — ${sl.title}`}
+                      onDragStart={e => onDragStart(e, sl.id)}
+                      onDragEnd={onDragEnd}
+                      onDragOver={e => onDragOver(e, sec.id, sl.id)}
+                      onDrop={e => onDrop(e, sec.id, sl.id)}
                     >
+                      <span className="slide-drag-handle" title="Drag to reorder">⠿</span>
                       <span className="slide-item-num">{sl.num}</span>
                       <span className="slide-item-title">{sl.title}</span>
                       <div className="slide-item-badges">
@@ -136,7 +193,6 @@ export default function Sidebar({
                   );
                 })}
 
-                {/* Inline add form */}
                 {addingTo === sec.id ? (
                   <div className="slide-add-form">
                     <input

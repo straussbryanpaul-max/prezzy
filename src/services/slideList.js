@@ -127,6 +127,23 @@ export function deleteSlideFromList(slideId) {
   persist(computeNums(secs));
 }
 
+export function reorderSlide(slideId, targetSectionId, targetIdx) {
+  const secs = load() || buildDefault();
+
+  let moved = null;
+  for (const sec of secs) {
+    const idx = sec.slides.findIndex(s => s.id === slideId);
+    if (idx >= 0) { [moved] = sec.slides.splice(idx, 1); break; }
+  }
+  if (!moved) return;
+
+  const targetSec = secs.find(s => s.id === targetSectionId);
+  if (!targetSec) return;
+  targetSec.slides.splice(targetIdx, 0, moved);
+
+  persist(computeNums(secs));
+}
+
 export function updateSlideTitleInList(slideId, newTitle) {
   const secs = load() || buildDefault();
   for (const sec of secs) {
