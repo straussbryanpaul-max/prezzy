@@ -231,10 +231,11 @@ body {
 
 /* ============ SIDEBAR ============ */
 .sidebar {
-  position: fixed; top: 60px; left: 0; width: 300px; bottom: 0;
+  position: fixed; top: 56px; left: 0; width: 300px; bottom: 0;
   background: var(--white); border-right: 1px solid var(--gray);
   overflow-y: auto; z-index: 900;
   transition: transform 0.25s cubic-bezier(.4,0,.2,1);
+  display: flex; flex-direction: column;
 }
 .sidebar.hidden { transform: translateX(-100%); }
 .sidebar-close {
@@ -411,10 +412,13 @@ body {
 }
 .section-add-slide-btn:hover { background: var(--light); color: var(--teal); }
 
-/* New Section footer */
+/* New Section — sticky footer, always visible */
 .sidebar-new-section {
+  position: sticky; bottom: 0;
+  background: var(--white);
   border-top: 2px solid var(--gray);
-  margin-top: 4px;
+  margin-top: auto; /* push to bottom when content is short */
+  flex-shrink: 0;
 }
 .sidebar-new-section-btn {
   width: 100%; padding: 10px 16px; text-align: left;
@@ -1694,25 +1698,26 @@ body.presentation-mode { overflow: hidden; }
 
 /* ============ MODULAR BLOCKS ============ */
 .block-toolbar {
-  position: fixed; bottom: 40px; left: 50%; transform: translateX(-50%);
+  position: fixed; bottom: 20px; right: 20px;
   background: var(--navy); border: 2px solid var(--red);
-  border-radius: 50px; padding: 8px 16px;
-  display: flex; align-items: center; gap: 6px;
+  border-radius: 14px; padding: 8px 12px;
+  display: flex; flex-direction: column; align-items: stretch; gap: 4px;
   box-shadow: 0 4px 24px rgba(0,0,0,.45), 0 0 0 4px rgba(232,41,11,.15);
   z-index: 2500;
+  max-height: calc(100vh - 90px); overflow-y: auto;
+  width: 160px;
 }
 .block-toolbar-reopen {
   position: fixed;
-  bottom: 40px;
-  left: 50%;
-  transform: translateX(-50%);
+  bottom: 20px;
+  right: 20px;
   background: var(--navy);
   border: 2px solid var(--red);
   color: #fff;
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  font-size: 24px;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  font-size: 20px;
   font-weight: 700;
   cursor: pointer;
   box-shadow: 0 4px 24px rgba(0,0,0,.45), 0 0 0 4px rgba(232,41,11,.15);
@@ -1725,19 +1730,19 @@ body.presentation-mode { overflow: hidden; }
 }
 .block-toolbar-reopen:hover { background: var(--blue); border-color: var(--blue); }
 .block-toolbar-label {
-  font-size: 10px; font-weight: 700; letter-spacing: 1px;
-  color: rgba(255,255,255,.4); text-transform: uppercase;
-  margin-right: 4px; white-space: nowrap;
+  font-size: 9px; font-weight: 700; letter-spacing: 1px;
+  color: rgba(255,255,255,.35); text-transform: uppercase;
+  padding: 2px 4px 4px; white-space: nowrap;
 }
 .tb-add-btn {
-  background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.12);
-  color: rgba(255,255,255,.8); padding: 6px 12px; border-radius: 20px;
+  background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.1);
+  color: rgba(255,255,255,.8); padding: 5px 10px; border-radius: 7px;
   cursor: pointer; font-size: 12px; font-family: inherit; font-weight: 500;
-  display: flex; align-items: center; gap: 5px; transition: var(--transition);
-  white-space: nowrap;
+  display: flex; align-items: center; gap: 6px; transition: var(--transition);
+  white-space: nowrap; width: 100%; text-align: left;
 }
 .tb-add-btn:hover { background: rgba(255,255,255,.18); color: #fff; border-color: rgba(255,255,255,.3); }
-.tb-divider { width: 1px; height: 20px; background: rgba(255,255,255,.15); margin: 0 2px; }
+.tb-divider { height: 1px; background: rgba(255,255,255,.12); margin: 2px 0; }
 
 /* ============ BLOCK GAP / INSERT ============ */
 .block-gap {
